@@ -146,15 +146,15 @@ export async function analysisLulc() {
   );
   // Evaluate the results
   const evaluatedAreas = await evaluate(areas);
-
-  // console.log("LULC Analysis Results:", evaluatedAreas);
-  return { data: evaluatedAreas };
+  console.log(evaluatedAreas)
+  return {evaluatedAreas};
 }
 
 
 
 export async function transferMatrixLulc() {
   await authenticate();
+  const area = ee.Image.pixelArea().divide(1e4);
   const imageCollection = ee.ImageCollection("projects/sat-io/open-datasets/GLC-FCS30D/annual")
   .select('b1')
   .mosaic()
@@ -171,68 +171,52 @@ const guyana = countries.filter(ee.Filter.eq('ADM0_NAME', 'Guyana'));
 const geometry = guyana.geometry();
 
 // Combine the two bands into one image
-const transitions = imageCollection.addBands(imageCollection2);
+const transitions = imageCollection.addBands(imageCollection2).addBands(area);
 
 // Generate a stratified sample
 const stratifiedSamples = transitions.stratifiedSample({
-  numPoints: 500, // Total number of points to sample
+  numPoints: 3000, // Total number of points to sample
   classBand: 'y1', // Use Year 2000 classes as the stratification band
   region: geometry, // Region to sample from
   scale: 30, // Scale of the dataset (30m resolution)
   geometries: true, // Include geometry information for each point
   classValues: [0, 10, 11, 51, 52, 61, 62, 71, 72, 81, 82, 91, 120, 130, 150, 181, 182, 183, 185, 186, 187, 190, 200, 210], // Your LULC class values
-  classPoints: Array(24).fill(10), // Number of points per class
+  classPoints: Array(24).fill(100), // Number of points per class
   });
 
 
   var dict = ee.Dictionary({}); // Initialize an empty dictionary
-var uniqueList = ee.List([]); // Initialize an empty ee.List
 
-// Use iterate to populate the dictionary
-var transitionDict = stratifiedSamples.iterate(function(feature, currentDict) {
-  currentDict = ee.Dictionary(currentDict); // Ensure it's a Dictionary
+  // Use iterate to populate the dictionary
+  var transitionDict = stratifiedSamples.iterate(function(feature, currentDict) {
+    currentDict = ee.Dictionary(currentDict); // Ensure it's a Dictionary
 
-  var y1 = feature.get('y1');
-  var y2 = feature.get('y2');
+    var y1 = feature.get('y1');
+    var y2 = feature.get('y2');
 
-  // Create a key for the transition
-  var key = ee.String(y1).cat('_').cat(ee.String(y2));
+    var key = ee.String(y1).cat('_').cat(ee.String(y2));
 
-  // Increment the count for this key
-  var count = ee.Number(currentDict.get(key, 0)).add(1);
-  return currentDict.set(key, count); // Update the dictionary
-}, dict);
+    // Increment the count for this key
+    var count = ee.Number(currentDict.get(key, 0)).add(1);
+    return currentDict.set(key, count); // Update the dictionary
+  }, dict);
 
-// Separate logic for unique values
-var allY1Y2 = stratifiedSamples.map(function(feature) {
-  var y1 = feature.get('y1');
-  var y2 = feature.get('y2');
-  return ee.Feature(null, { y1: y1, y2: y2 });
-}).reduceColumns({
-  reducer: ee.Reducer.toList().repeat(2),
-  selectors: ['y1', 'y2']
-});
+  // Separate logic for unique values
+  var allY1Y2 = stratifiedSamples.map(function(feature) {
+    var y1 = feature.get('y1');
+    var y2 = feature.get('y2');
+    return ee.Feature(null, { y1: y1, y2: y2 });
+  }).reduceColumns({
+    reducer: ee.Reducer.toList().repeat(2),
+    selectors: ['y1', 'y2']
+  });
 
-// Extract unique values for y1 and y2
-var uniqueY1Y2 = ee.List(allY1Y2.get('list')).flatten().distinct();
+  var uniqueY1Y2 = ee.List(allY1Y2.get('list')).flatten().distinct();
 
-// Evaluate the results
-transitionDict.evaluate(function(resultDict) {
-  console.log('Transition Dictionary:', resultDict);
-});
+  var transferMatrix = await evaluate(transitionDict);
+  var uniqueKeys = await evaluate(uniqueY1Y2);
+  console.log(transferMatrix)
 
-uniqueY1Y2.evaluate(function(resultList) {
-  console.log('Unique List:', resultList);
-});
-
-  // // Fetch and log the resulting dictionary (asynchronous)
-  // transitionDict.evaluate((result: any) => {
-  //   console.log('Transition Dictionary:', result);
-  // });
-
-  // // Log stratified samples (optional debugging)
-  // stratifiedSamples.evaluate((result: any) => {
-  //   console.log('Stratified Samples:', result);
-  // });
+  return {transferMatrix:transferMatrix, uniqueKeys:uniqueKeys}
 
 }

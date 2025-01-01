@@ -31,10 +31,10 @@ export default function MapCanvas() {
     async function loadLULCTiles() {
       try {
         const { urlFormat } = await lulcLayer(); // Fetch tile URL
-        const { data } = await analysisLulc();
-        const { histogramData } = await transferMatrixLulc();
-  
-        // console.log(histogramData)
+        const  evaluatedAreas  = await analysisLulc();
+        const  histogramData  = await transferMatrixLulc();
+        console.log(histogramData)
+        console.log(evaluatedAreas)
         setTile(urlFormat); // Store the URL in state
       } catch (error) {
         console.error("Error loading LULC tiles:", error);
