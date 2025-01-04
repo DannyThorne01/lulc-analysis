@@ -78,5 +78,189 @@
     "Water body",
     "Permanent ice and snow",
     "Filled value"
-  ]
+  ], 
+  "key_map":{
+    
+      "10": "Rainfed cropland",
+      "11": "Herbaceous cropland",
+      "12": "Tree-shrub cropland",
+      "20": "Irrigated cropland",
+      "51": "Open-evergreen broadleaved-forest",
+      "52": "Closed-evergreen broadleaved-forest",
+      "61": "Open-deciduous broadleaved-forest",
+      "62": "Closed-deciduous broadleaved-forest",
+      "71": "Open-evergreen needleleaved-forest",
+      "72": "Closed-evergreen needleleaved-forest",
+      "81": "Open-deciduous needleleaved-forest",
+      "82": "Closed-deciduous needleleaved-forest",
+      "91": "Open mixedleaf-forest",
+      "92": "Closed mixedleaf-forest",
+      "120": "Shrubland",
+      "121": "Evergreen shrubland",
+      "122": "Deciduous shrubland",
+      "130": "Grassland",
+      "140": "Lichens and mosses",
+      "150": "Sparse vegetation",
+      "152": "Sparse shrubland",
+      "153": "Sparse herbaceous",
+      "181": "Swamp",
+      "182": "Marsh",
+      "183": "Flooded flat",
+      "184": "Saline",
+      "185": "Mangrove",
+      "186": "Salt marsh",
+      "187": "Tidal flat",
+      "190": "Impervious surfaces",
+      "200": "Bare areas",
+      "201": "Consolidated bare areas",
+      "202": "Unconsolidated bare areas",
+      "210": "Water body",
+      "220": "Permanent ice and snow",
+      "0": "Filled value"
+  }, 
+  "group_map":{
+    "cropland": [
+      "Rainfed cropland",
+      "Herbaceous cropland",
+      "Tree-shrub cropland",
+      "Irrigated cropland"
+    ],
+    "broadleaf-forest": [
+      "Open-evergreen broadleaved-forest",
+      "Closed-evergreen broadleaved-forest",
+      "Open-deciduous broadleaved-forest",
+      "Closed-deciduous broadleaved-forest"
+    ],
+    "needleleaf-forest": [
+      "Open-evergreen needleleaved-forest",
+      "Closed-evergreen needleleaved-forest",
+      "Open-deciduous needleleaved-forest",
+      "Closed-deciduous needleleaved-forest"
+    ],
+    "mixed-leaf-forest": [
+      "Open mixedleaf-forest",
+      "Closed mixedleaf-forest"
+    ],
+    "shrubland": [
+      "Shrubland",
+      "Evergreen shrubland",
+      "Deciduous shrubland"
+    ],
+    "grassland": [
+      "Grassland"
+    ],
+    "lichen-moss": [
+      "Lichens and mosses"
+    ],
+    "sparse-vegetation": [
+      "Sparse vegetation",
+      "Sparse shrubland",
+      "Sparse herbaceous"
+    ],
+    "wetlands": [
+      "Swamp",
+      "Marsh",
+      "Flooded flat",
+      "Saline",
+      "Mangrove",
+      "Salt marsh",
+      "Tidal flat"
+    ],
+    "impervious-surfaces": [
+      "Impervious surfaces"
+    ],
+    "bare-areas": [
+      "Bare areas",
+      "Consolidated bare areas",
+      "Unconsolidated bare areas"
+    ],
+    "water": [
+      "Water body"
+    ],
+    "ice-snow": [
+      "Permanent ice and snow"
+    ],
+    "others": [
+      "Filled value"
+    ]
+  },
+  "reverse_group_map":
+    {
+      "Rainfed cropland": "cropland",
+      "Herbaceous cropland": "cropland",
+      "Tree-shrub cropland": "cropland",
+      "Irrigated cropland": "cropland",
+      "Open-evergreen broadleaved-forest": "broadleaf-forest",
+      "Closed-evergreen broadleaved-forest": "broadleaf-forest",
+      "Open-deciduous broadleaved-forest": "broadleaf-forest",
+      "Closed-deciduous broadleaved-forest": "broadleaf-forest",
+      "Open-evergreen needleleaved-forest": "needleleaf-forest",
+      "Closed-evergreen needleleaved-forest": "needleleaf-forest",
+      "Open-deciduous needleleaved-forest": "needleleaf-forest",
+      "Closed-deciduous needleleaved-forest": "needleleaf-forest",
+      "Open mixedleaf-forest": "mixed-leaf-forest",
+      "Closed mixedleaf-forest": "mixed-leaf-forest",
+      "Shrubland": "shrubland",
+      "Evergreen shrubland": "shrubland",
+      "Deciduous shrubland": "shrubland",
+      "Grassland": "grassland",
+      "Lichens and mosses": "lichen-moss",
+      "Sparse vegetation": "sparse-vegetation",
+      "Sparse shrubland": "sparse-vegetation",
+      "Sparse herbaceous": "sparse-vegetation",
+      "Swamp": "wetlands",
+      "Marsh": "wetlands",
+      "Flooded flat": "wetlands",
+      "Saline": "wetlands",
+      "Mangrove": "wetlands",
+      "Salt marsh": "wetlands",
+      "Tidal flat": "wetlands",
+      "Impervious surfaces": "impervious-surfaces",
+      "Bare areas": "bare-areas",
+      "Consolidated bare areas": "bare-areas",
+      "Unconsolidated bare areas": "bare-areas",
+      "Water body": "water",
+      "Permanent ice and snow": "ice-snow",
+      "Filled value": "others"
+  }, 
+  "reductions":{
+    "Rainfed cropland": "Rainfed",
+    "Herbaceous cropland": "Herbaceous",
+    "Tree-shrub cropland": "Tree-shrub",
+    "Irrigated cropland": "Irrigated",
+    "Open-evergreen broadleaved-forest": "Open-EverB",
+    "Closed-evergreen broadleaved-forest": "Closed-EverB",
+    "Open-deciduous broadleaved-forest": "Open-DecidB",
+    "Closed-deciduous broadleaved-forest": "Closed-DecidB",
+    "Open-evergreen needleleaved-forest": "Open-EverN",
+    "Closed-evergreen needleleaved-forest": "Closed-EverN",
+    "Open-deciduous needleleaved-forest": "Open-DecidN",
+    "Closed-deciduous needleleaved-forest": "Closed-DecidN",
+    "Open mixedleaf-forest": "Open-mixed",
+    "Closed mixedleaf-forest": "Closed-mixed",
+    "Shrubland": "Shrubland",
+    "Evergreen shrubland": "Ever-shrub",
+    "Deciduous shrubland": "Dec-shrub",
+    "Grassland": "Grassland",
+    "Lichens and mosses": "Lichens",
+    "Sparse vegetation": "Sparse-veg",
+    "Sparse shrubland": "Sparse-shrub",
+    "Sparse herbaceous": "Sparse-herb",
+    "Swamp": "Swampland",
+    "Marsh": "Marshland",
+    "Flooded flat": "Flooded",
+    "Saline": "Saline",
+    "Mangrove": "Mangrove",
+    "Salt marsh": "SaltMarsh",
+    "Tidal flat": "TidalFlat",
+    "Impervious surfaces": "Impervious",
+    "Bare areas": "Bare",
+    "Consolidated bare areas": "Consolidated",
+    "Unconsolidated bare areas": "Unconsolidated",
+    "Water body": "Water",
+    "Permanent ice and snow": "Ice-snow",
+    "Filled value": "Filled"
+  }
+  
+  
 }
