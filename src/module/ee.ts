@@ -3,6 +3,8 @@
 import ee from '@google/earthengine';
 import { authenticate, evaluate, getMapId } from './ee-server';
 import lc from '../data/lc.json';
+import * as fs from 'fs'; // Import the filesystem module
+import * as path from 'path'; 
 
 export async function lulcLayer() {
   var year = 2022;
@@ -86,6 +88,11 @@ export async function analysisLulc() {
   // Evaluate the results
   const evaluatedAreas = await evaluate(areas);
   console.log(evaluatedAreas)
+  // Define the output path for the JSON file
+  const outputPath = path.resolve(__dirname, 'evaluated_areas.json');
+  console.log(__dirname)
+  // Save the results to a JSON file
+  fs.writeFileSync(outputPath, JSON.stringify(evaluatedAreas, null, 2), 'utf8');
   return {evaluatedAreas};
 }
 

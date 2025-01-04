@@ -60,12 +60,10 @@ const HeatMap = ({ info }: Props) => {
     return reductions
   }
   let reductions = makeReductions();
-  console.log(reductions)
   
   let xGroups=findGroups()
-  console.log(xGroups)
-  let new_keys = Object.values(xGroups).flat();
-  console.log(new_keys)
+
+
 
   useEffect(() => {
     d3.select(svgRef.current).selectAll("*").remove();
@@ -123,11 +121,11 @@ const HeatMap = ({ info }: Props) => {
     heatmapYAxis.call(yAxis);
 
     Object.entries(xGroups).forEach((entry: [string, string[]]) => {
-      console.log(entry[0]);
+  
     
       const yStart = yScale(data.reductions[entry[1][0]]);
       const yEnd = yScale(data.reductions[entry[1][entry[1].length - 1]]);
-      console.log(yStart, yEnd);
+
     
       // Add line annotation
       yAnnotations
@@ -142,7 +140,7 @@ const HeatMap = ({ info }: Props) => {
         .attr("stroke-width", 5);
     });
     Object.entries(xGroups).forEach((entry: [string, string[]]) => {
-      console.log(entry[0]);
+
     
       const xStart = xScale(data.reductions[entry[1][0]]);
       const xEnd = xScale(data.reductions[entry[1][entry[1].length - 1]]);
@@ -225,7 +223,6 @@ const HeatMap = ({ info }: Props) => {
       });
     });
     
-    console.log(transferMatrix)
     // Draw heatmap rectangles
     d3svg
       .selectAll(".tile")
