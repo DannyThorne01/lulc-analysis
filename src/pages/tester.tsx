@@ -1,6 +1,7 @@
 "use client";
 import HeatMap from "../components/charts/heatmap";
 import StackLineGraph from "../components/charts/line-graph";
+import SidePanel from "../components/sidepanel";
 import heatmap_data from '../data/example-heatmap.json';
 import evaluated_areas from "../data/evaluated_areas.json"
 
@@ -8,11 +9,8 @@ import evaluated_areas from "../data/evaluated_areas.json"
 const Tester= () => {
   return (
     <>
-     {/* <div>
-      <HeatMap info = {heatmap_data}/>
-    </div> */}
-    <div>
-      <StackLineGraph info ={evaluated_areas}/>
+     <div>
+      <SidePanel heatmapData={heatmap_data} evaluatedAreas={evaluated_areas}/>
     </div>
     </>
    

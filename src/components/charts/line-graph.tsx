@@ -18,8 +18,8 @@ interface Props {
 
 const StackLineGraph = ({ info }: Props) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
-  const w = 500;
-  const h = 500;
+  const w = 600;
+  const h = 600;
   const m = { top: 40, right: 30, bottom: 100, left: 100 };
   const slinegraphWidth = w - m.left - m.right;
   const slinegraphHeight = h - m.top - m.bottom;
@@ -30,11 +30,15 @@ const StackLineGraph = ({ info }: Props) => {
     acc[index] = e.lc; // Use index as the key and e.lc as the value
     return acc;
   }, {});
+  console.log(mappings)
   const values= Object.values(mappings);
-  console.log(values)
+  const values_str = values.map((d:number) => {
+    return data.reductions[data.key_map[d.toString()]]
+  })
+  console.log(values_str)
   // handle dropdown click
   const handleDropDownClick = (event) => {
-    const selectedValue = Number(event.target.value)
+    const selectedValue = Number(data.reductions_to_key[event.target.value])
     if(selectedValue && !mygroup.includes(selectedValue)){
       setMyGroup([...mygroup, values.indexOf(selectedValue)]);
     }
@@ -56,7 +60,7 @@ const StackLineGraph = ({ info }: Props) => {
             .data(values)
             .enter()
             .append("option")
-            .text(d => d);
+            .text(d => data.reductions[data.key_map[d.toString()]]);
     // add the buttons
 
 
@@ -162,18 +166,68 @@ const StackLineGraph = ({ info }: Props) => {
 
 
 
-  return (
-    <div className="slinegraph">
-      <svg ref={svgRef}></svg>
-      <select id="my-dropdown" onChange={handleDropDownClick}></select>
-      <div>
+   return (
+    <div
+      className="slinegraph"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        fontFamily: 'Arial, sans-serif',
+      }}
+    >
+      <svg ref={svgRef} style={{ display: 'block', maxWidth: '100%'}}></svg>
+  
+      {/* Dropdown */}
+      <select
+        id="my-dropdown"
+        onChange={handleDropDownClick}
+        style={{
+          width: '200px',
+          padding: '10px',
+          margin: '20px 0',
+          fontSize: '16px',
+          border: '1px solid #ccc',
+          borderRadius: '5px',
+          backgroundColor: '#f9f9f9',
+          color: '#333',
+          cursor: 'pointer',
+        }}
+      ></select>
+  
+      {/* Buttons Section */}
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '10px',
+          marginTop: '10px',
+          justifyContent: 'center',
+        }}
+      >
         {mygroup.map((item, index) => (
-          <button key={index} onClick={() => handleButtonClick(item)}>
-            {item}
+          <button
+            key={index}
+            onClick={() => handleButtonClick(item)}
+            style={{
+              backgroundColor: '#69b3a2',
+              color: 'white',
+              border: 'none',
+              borderRadius: '5px',
+              padding: '10px 15px',
+              fontSize: '14px',
+              cursor: 'pointer',
+              transition: 'background-color 0.3s ease, transform 0.2s ease',
+              boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
+            }}
+            
+          >
+            {data.reductions[data.key_map[mappings[item].toString()]]}
           </button>
         ))}
       </div>
     </div>
-  )
+  );
+  
 }
 export default StackLineGraph
