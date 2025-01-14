@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { JSX, useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import data from "../../data/lc.json";
 
@@ -23,56 +23,67 @@ const StackLineGraph = ({ info }: Props) => {
   const m = { top: 40, right: 30, bottom: 100, left: 100 };
   const slinegraphWidth = w - m.left - m.right;
   const slinegraphHeight = h - m.top - m.bottom;
+
   
-  const [mygroup, setMyGroup] = useState([3,16,8,17]);
-   // build the index to key mappings 
-   const mappings = info[0].groups.reduce((acc, e, index) => {
+
+  const allGroups = info.flatMap((year) => year.groups);
+  // console.log(allGroups)
+
+  // Create mappings with explicit typing
+  const mappings: Record<number, number> = info[0].groups.reduce((acc, e, index) => {
     acc[index] = e.lc; // Use index as the key and e.lc as the value
     return acc;
   }, {});
   console.log(mappings)
-  const values= Object.values(mappings);
-  const values_str = values.map((d:number) => {
-    return data.reductions[data.key_map[d.toString()]]
-  })
-  console.log(values_str)
-  // handle dropdown click
+
+  // Extract values with explicit typing
+  const values: number[] = Object.values(mappings);
+  console.log(values)
+  // Initialize `mygroup` with 4 random numbers from `values`
+  const [mygroup, setMyGroup] = useState<number[]>(() => {
+    return values.sort(() => 0.5 - Math.random()).slice(0, 7); // Random 4
+  });
+  console.log(mygroup)
+  const [buttons, setButtons] = useState<JSX.Element[]>([]);
+  
   const handleDropDownClick = (event) => {
-    const selectedValue = Number(data.reductions_to_key[event.target.value])
-    if(selectedValue && !mygroup.includes(selectedValue)){
-      setMyGroup([...mygroup, values.indexOf(selectedValue)]);
-    }
+    const selectedValue = Number(data.reductions_to_key[event.target.value]);
+    // Use functional update for setMyGroup
+    setMyGroup((prevMyGroup) => {
+      if (selectedValue && !prevMyGroup.includes(selectedValue)) {
+        return [...prevMyGroup, selectedValue];
+      }
+      return prevMyGroup; // Return the current state if no update is needed
+    });
   }
+  console.log("MY group ADD " + mygroup)
   const handleButtonClick = (item) =>{
-    console.log(item)
-    // const selectedValue = Number(event.target.value)
-    // console.log(selectedValue)
-    // console.log(values.indexOf(selectedValue))
     setMyGroup(mygroup.filter(value => value !== item));
-    // console.log(mygroup)
   }
+  console.log("MY group Deletre " + mygroup)
    useEffect(() => {
     d3.select(svgRef.current).selectAll("*").remove();
-    //For the dropdown
-   
     const dropdown = d3.select("#my-dropdown")
         dropdown.selectAll("option")
             .data(values)
             .enter()
             .append("option")
             .text(d => data.reductions[data.key_map[d.toString()]]);
-    // add the buttons
 
-
-    var stackedData = d3.stack()
+    const stackedData = d3
+    .stack()
     .keys(mygroup)
-    .value(function(group,key){
-      
-      return (group.groups[key].area)
-    })
-   (info)
+    .value((group, key) => {
+      const matchingGroup = group.groups.find((g) => g.lc === key); // Find matching group
+      const areaValue = matchingGroup ? matchingGroup.area : 0; // Use area or 0 if not found
+      // console.log(`Key: ${key}, Area: ${areaValue}`); // Debugging
+      // console.log(areaValue)
+      return areaValue;
+    })(info);
 
-    const allGroups = info.flatMap(year => year.groups);
+    console.log(stackedData)
+
+    
     const maxByLandCover = allGroups.reduce((acc, group) => {
       const lc = group.lc;
       const area = group.area; 
@@ -108,35 +119,40 @@ const StackLineGraph = ({ info }: Props) => {
       .range([0, slinegraphWidth])
       .domain([0,22])
 
-    console.log(mygroup)
+
     const yScale = d3
     .scaleLinear()
     .range([slinegraphHeight, 0])
     .domain([
       0,
       d3.sum(mygroup, (d) => {
-        // console.log("Current group:", d);
-        // console.log("Mapping for group:", mappings[d]);
-        // console.log("MaxByLandCover value:", maxByLandCover[mappings[d]]);
-        return (maxByLandCover[mappings[d]] || 0) * 2;
+        console.log("Current group:", d);
+        console.log("Mapping for group:", mappings[values.indexOf(d)]);
+        console.log("MaxByLandCover value:", maxByLandCover[mappings[values.indexOf(d)]]);
+        return (maxByLandCover[mappings[values.indexOf(d)]] || 0) * 2;
       }),
     ]);
       // .domain(0,d3.max(mygroup,(d)=>{console.log(d)}))
+    console.log(yScale.domain())
 
 
       // color palette
-    var color = d3.scaleOrdinal()
+      const color = d3.scaleOrdinal()
       .domain(mygroup)
       .range([
-        '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf',
-        '#aec7e8', '#ffbb78', '#98df8a', '#ff9896', '#c5b0d5', '#c49c94', '#f7b6d2', '#c7c7c7', '#dbdb8d', '#9edae5',
-        '#393b79', '#637939', '#8c6d31', '#843c39'
+        "#6A4C93", "#1982C4", "#8AC926", "#FFCA3A", "#FF595E", "#4CAF50",
+        "#F4A261", "#2A9D8F", "#264653", "#E76F51", "#D4A5A5", "#9B5DE5",
+        "#F15BB5", "#00BBF9", "#FEE440", "#AACC00", "#118AB2", "#8D99AE",
+        "#FFC300", "#90BE6D", "#6D6875", "#FF7A5C", "#457B9D", "#E9C46A",
+        "#E63946", "#A8DADC", "#B5838D", "#CB997E", "#DDBEA9", "#FFC6FF",
+        "#D6A2E8", "#B2A4FF", "#85C7F2"
       ]);
+
 
     // Axes
     const xAxis = d3.axisBottom(xScale);
     const yAxis = d3.axisLeft(yScale);
-    console.log(yScale.domain())
+
     slineGraphXAxis.call(xAxis);
     const slineGraphYAxis = d3svg
       .selectAll(".y-axis")
@@ -148,6 +164,7 @@ const StackLineGraph = ({ info }: Props) => {
       .attr("transform", `translate(${m.left - 10}, ${m.top})`)
       .merge(slineGraphYAxis)
       .call(yAxis);
+   
 
     slineGraphArea 
     .selectAll("mylayers")
@@ -162,7 +179,32 @@ const StackLineGraph = ({ info }: Props) => {
       .y1((d)=> {return yScale(d[1]); })
     )
     .attr("class", (d) => {return mappings[d.key]})
+
+
+    // Generate Buttons
+    const newButtons = mygroup.map((item, index) => (
+      <button
+        key={index}
+        onClick={() => handleButtonClick(item)}
+        style={{
+          backgroundColor: color(item),
+          color: "white",
+          border: "none",
+          borderRadius: "5px",
+          padding: "10px 15px",
+          fontSize: "14px",
+          cursor: "pointer",
+          transition: "background-color 0.3s ease, transform 0.2s ease",
+          boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
+        }}
+      >
+        {data.reductions_to_key_inverse[item.toString()]}
+      </button>
+    ));
+    setButtons(newButtons);
+    
    },[info,mygroup])
+
 
 
 
@@ -205,26 +247,17 @@ const StackLineGraph = ({ info }: Props) => {
           justifyContent: 'center',
         }}
       >
-        {mygroup.map((item, index) => (
-          <button
-            key={index}
-            onClick={() => handleButtonClick(item)}
-            style={{
-              backgroundColor: '#69b3a2',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              padding: '10px 15px',
-              fontSize: '14px',
-              cursor: 'pointer',
-              transition: 'background-color 0.3s ease, transform 0.2s ease',
-              boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
-            }}
-            
-          >
-            {data.reductions[data.key_map[mappings[item].toString()]]}
-          </button>
-        ))}
+       <div
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        gap: "10px",
+        marginTop: "10px",
+        justifyContent: "center",
+      }}
+    >
+      {buttons} {/* Inject precomputed buttons here */}
+    </div>
       </div>
     </div>
   );

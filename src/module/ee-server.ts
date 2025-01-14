@@ -1,4 +1,3 @@
-
 import 'node-self';
 import ee from '@google/earthengine';
 import { MapId, VisObject } from './global';
@@ -12,7 +11,13 @@ dotenv.config({ path: "../../.env" });
  * @returns {Promise<void>} did not return anything
  */
 export function authenticate(): Promise<void> {
-  const key = JSON.parse(process.env.service_account_key);
+  const serviceAccountKey = process.env.service_account_key;
+
+  if (!serviceAccountKey) {
+    throw new Error("Environment variable 'service_account_key' is not set.");
+  }
+
+  const key = JSON.parse(serviceAccountKey); // Parse it safely here
   return new Promise<void>((resolve, reject) => {
     ee.data.authenticateViaPrivateKey(
       key,

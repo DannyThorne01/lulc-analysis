@@ -68,9 +68,11 @@ const HeatMap = ({ info }: Props) => {
   useEffect(() => {
     d3.select(svgRef.current).selectAll("*").remove();
     
+    
     const d3svg = d3
     .select(svgRef.current)
     .attr("viewBox", `0 0 ${w} ${h}`)
+    .attr("border-radius", "10px")
     .style("background-color", "#d9d9d9");
 
     // Annotation groups for axes
@@ -137,6 +139,7 @@ const HeatMap = ({ info }: Props) => {
         .attr("opacity", "0.4")
         .attr("y2", yEnd)
         .attr("stroke", colorScale(entry[0]))
+        
         .attr("stroke-width", 5);
     });
     Object.entries(xGroups).forEach((entry: [string, string[]]) => {
@@ -230,6 +233,8 @@ const HeatMap = ({ info }: Props) => {
       .enter()
       .append("rect")
       .attr("class", "tile")
+      .attr("rx", 10) 
+      .attr("ry", 10)
       .attr("x", (d) => xScale(data.reductions[data.key_map[d.after.toString()]])! + m.left)
       .attr("y", (d) => yScale(data.reductions[data.key_map[d.before.toString()]])! + m.top)
       .attr("rx", 2) // Set the x-axis corner radius
@@ -238,6 +243,7 @@ const HeatMap = ({ info }: Props) => {
       .attr("height", yScale.bandwidth())
       .style("fill", (d) => myColor(d.value));
   }, [info]);
+ 
 
   return <svg ref={svgRef}></svg>;
 };

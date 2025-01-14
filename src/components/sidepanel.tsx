@@ -1,8 +1,43 @@
 import React from 'react';
 import HeatMap from './charts/heatmap'; // Assuming HeatMap is in the same directory
-import StackLineGraph from './charts/line-graph'; // Assuming StackLineGraph is in the same directory
+import StackLineGraph from './charts/line-graph'; // Assuming StackLineGraph is in the same 
+import { Context } from '../module/global';
+import { useContext, useEffect, useState } from "react";
+import { analysisLulc, lulcLayer, transferMatrixLulc } from "../module/ee";
+import evaluatedAreas from '../data/evaluated_areas.json';
 
-const SidePanel = ({ heatmapData, evaluatedAreas }) => {
+const SidePanel = () => {
+  const context = useContext(Context);
+  const [loading, setLoading] = useState(false); // Loading states
+    if (!context) {
+      throw new Error('Context must be used within a ContextProvider');
+    }
+    const { heatmapData,setHeatMapData,
+            linegraphData,setLineGraphData,
+            country,setCountry } = context;
+    useEffect(() => {
+      if (!country) return;
+  
+      async function loadHeatMap() {
+        setLoading(true); // Start loading
+        try {
+          console.log("Fetching heatmap data for:", country);
+          const heatmap = await transferMatrixLulc(country); // Slow function
+          const linegraph = await analysisLulc(country);
+          console.log(linegraph)
+          // linegData = linegraph
+          setLineGraphData(linegraph.evaluatedAreas)
+          setHeatMapData(heatmap); // Update heatmap data
+        } catch (error) {
+          console.error("Error fetching heatmap data:", error);
+        } finally {
+          setLoading(false); // Stop loading
+        }
+      }
+      loadHeatMap();
+    }, [country]);
+   
+  
   return (
     <div
       style={{
@@ -29,12 +64,20 @@ const SidePanel = ({ heatmapData, evaluatedAreas }) => {
           flex: '1',
           padding: '10px',
           border: '1px solid #ccc',
-          borderRadius: '5px',
+          borderRadius: '10px',
           backgroundColor: '#f9f9f9',
         }}
       >
         <h3 style={{ textAlign: 'center', marginBottom: '10px' }}>HeatMap</h3>
-        <HeatMap info={heatmapData} />
+                {
+                  loading ? (
+                    <p style={{ textAlign: 'center', color: '#888' }}>Generating...</p>
+                  ) : !heatmapData ? (
+                    <p style={{ textAlign: 'center', color: '#888' }}>NO DATA</p>
+                  ) : (
+                    <HeatMap info={heatmapData} />
+                  )
+                }
       </div>
 
       {/* StackLineGraph Section */}
@@ -48,8 +91,20 @@ const SidePanel = ({ heatmapData, evaluatedAreas }) => {
    
         }}
       >
+        
         <h3 style={{ textAlign: 'center', marginBottom: '10px' }}>Stack Line Graph</h3>
-        <StackLineGraph info={evaluatedAreas} />
+       
+        {
+          
+                  loading ? (
+                    <p style={{ textAlign: 'center', color: '#888' }}>Generating...</p>
+                  ) : !linegraphData ? (
+                    <p style={{ textAlign: 'center', color: '#888' }}>NO DATA</p>
+                  ) : (
+                    <StackLineGraph info={linegraphData} />
+                  )
+                }
+        
       </div>
     </div>
   );

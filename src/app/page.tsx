@@ -1,88 +1,79 @@
-"use client";
+'use client'; // Ensure the page runs on the client side
 
-import { Map, RasterTileSource } from "maplibre-gl";
-import { useEffect, useState } from "react";
-import "../../node_modules/maplibre-gl/dist/maplibre-gl.css";
-import { analysisLulc, lulcLayer , transferMatrixLulc} from "../module/ee";
-import MapComponent, { NavigationControl } from "react-map-gl/maplibre"; 
+import React, { useState, useEffect, useRef } from "react";
+import MapCanvas from '../components/worldmap'; // Adjust path as needed
+import SidePanel from '../components/sidepanel'; // Optional
+import evaluatedAreas from '../data/evaluated_areas.json';
+import data from '../data/lc.json';
+import { Context,Props, LineGraphProps} from '../module/global';
+import { Map } from 'maplibre-gl'
 
-export default function MapCanvas() {
-  // Declare state variables
-  const MAP_STYLE = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
 
-  const INITIAL_VIEW_STATE = {
-    latitude: 4.8604, // Centered on Guyana
-    longitude: -58.9302,
-    zoom: 7,
-    bearing: 0,
-    pitch: 0,
+const Page: React.FC = () => {
+  const [map, setMap] = useState<Map>();
+  const [tile, setTile] = useState<string | undefined>(undefined);
+  const [heatmapData, setHeatMapData] = useState<Props | undefined>(undefined);
+  const [linegraphData, setLineGraphData] = useState<LineGraphProps| undefined>(undefined);
+  const [country,setCountry] = useState<string>("")
+  const contextDict = {
+    map,setMap,tile,setTile,
+    heatmapData,setHeatMapData,linegraphData,setLineGraphData,
+    country,setCountry
   };
 
-  const [viewState, setViewState] = useState(INITIAL_VIEW_STATE);
-  const [map, setMap] = useState(null);
-  const [tile, setTile] = useState(null);
-  const [layerAdded, setLayerAdded] = useState(false);
-
-  // Layer ID for the GEE overlay
-  const eeLayerId = "gee-layer";
-
-  // Fetch LULC layer
-  useEffect(() => {
-    async function loadLULCTiles() {
-      try {
-        const { urlFormat } = await lulcLayer(); // Fetch tile URL
-        const  evaluatedAreas  = await analysisLulc();
-        const  histogramData  = await transferMatrixLulc();
-        console.log(histogramData)
-        console.log(evaluatedAreas)
-        setTile(urlFormat); // Store the URL in state
-      } catch (error) {
-        console.error("Error loading LULC tiles:", error);
-      }
+  const handleDropDownClick = (event) => {
+    const selectedValue = event.target.value
+    if(selectedValue){
+      setCountry(selectedValue);
     }
-    loadLULCTiles();
-  }, []);
-
-  // Add LULC tiles to the map when available
-  useEffect(() => {
-    if (map && tile && !layerAdded) {
-      try {
-        map.addSource(eeLayerId, {
-          type: "raster",
-          tiles: [tile],
-          tileSize: 256,
-        });
-
-        map.addLayer({
-          id: eeLayerId,
-          type: "raster",
-          source: eeLayerId,
-          minzoom: 0,
-          maxzoom: 20,
-        });
-
-        setLayerAdded(true); // Ensure the layer is only added once
-      } catch (error) {
-        console.error("Error adding layer to map:", error);
-      }
-    }
-  }, [map, tile, layerAdded]);
-
-  // Handle map load
-  const handleMapLoad = (event) => {
-    setMap(event.target);
-  };
-
+  }
+  // useEffect(() => {
+  //   console.log("Updated Country State:", country);
+  // }, [country]);
+   
   return (
-    <MapComponent
-      id="map"
-      initialViewState={viewState}
-      mapStyle={MAP_STYLE}
-      style={{ width: "100vw", height: "100vh" }}
-      onLoad={handleMapLoad}
-      onMove={(evt) => setViewState(evt.viewState)}
+    <div style={{ display: 'flex', height: '100vh', width: '100vw' }}>
+
+      {/* Dropdown */}
+    <select
+      id="homepage-dropdown"
+      onChange={handleDropDownClick}
+      style={{
+        position: 'absolute', // Makes it overlay on top of the map
+        top: '5%',           // Adjusts the vertical position
+        left: '50%',          // Centers horizontally
+        transform: 'translateX(-50%)', // Ensures proper centering
+        width: '500px',
+        padding: '10px',
+        fontSize: '16px',
+        border: '1px solid #ccc',
+        borderRadius: '5px',
+        backgroundColor: '#f9f9f9',
+        color: '#333',
+        cursor: 'pointer',
+        zIndex: 1000, // Ensures it stays on top of other elements
+      }}
     >
-      <NavigationControl position="top-left" />
-    </MapComponent>
+      {
+        data.countries.map((country, index) => (
+          <option key={index} value={country}>
+          {country}
+          </option>
+        ))
+      }
+    </select>
+      {/* Map Canvas (Main Map View) */}
+      <div style={{ flex: 3 }}>
+      <Context.Provider value={contextDict}><MapCanvas /></Context.Provider>
+        
+      </div>
+
+      {/* Side Panel (Optional) */}
+      <div style={{ flex: 1, overflow: 'auto' }}>
+      <Context.Provider value={contextDict}><SidePanel /></Context.Provider>
+      </div>
+    </div>
   );
-}
+};
+
+export default Page;

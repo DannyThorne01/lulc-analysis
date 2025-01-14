@@ -6,29 +6,22 @@ import lc from '../data/lc.json';
 import * as fs from 'fs'; // Import the filesystem module
 import * as path from 'path'; 
 
-export async function lulcLayer() {
-  var year = 2022;
+export async function lulcLayer(input_country) {
+  if(input_country!=""){
+    var year = 2022;
   // Authenticate Earth Engine
   await authenticate();
 
+  console.log("INPIUTTTT COUNRYTRY " + input_country)
   // Image collection
   const col: ee.ImageCollection = ee.ImageCollection("projects/sat-io/open-datasets/GLC-FCS30D/annual");
 
   const countries = ee.FeatureCollection('FAO/GAUL/2015/level0');
-  const guyana = countries.filter(ee.Filter.eq('ADM0_NAME', 'Guyana'));
+  const guyana = countries.filter(ee.Filter.eq('ADM0_NAME', input_country));
   const geometry = guyana.geometry();
 
   // Create image mosaic
   let colBand: ee.ImageCollection = col.select(`b${year-1999}`);
-
-  // Conditional mosaic based on year
-
-  // if (year < 2000) {
-  //   colBand = col.select(`b${(year - 1980) / 5}`);
-  // } else {
-  //   colBand = col.select(`b${year - 1999}`);
-  // }
-
   // Mosaic the image and add visualization
   const image: ee.Image = colBand.mosaic().rename('lulc').set({
     lulc_class_names: lc.names,
@@ -43,10 +36,21 @@ export async function lulcLayer() {
   // Get image url
   const { urlFormat } = await getMapId(visualized, {});
 
+  const bounds = geometry.bounds().coordinates().getInfo();
+  const [west, south, east, north] = [
+    bounds[0][0][0], // west
+    bounds[0][0][1], // south
+    bounds[0][2][0], // east
+    bounds[0][2][1], // north
+  ];
+
   return { urlFormat };
+  }else{
+    return {}
+  }
 }
 
-export async function analysisLulc() {
+export async function analysisLulc(input_country) {
   await authenticate();
   const years = [2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019,
   2020, 2021, 2022];
@@ -56,7 +60,7 @@ export async function analysisLulc() {
 
   const area = ee.Image.pixelArea().divide(1e4);
   const countries = ee.FeatureCollection('FAO/GAUL/2015/level0');
-  const guyana = countries.filter(ee.Filter.eq('ADM0_NAME', 'Guyana'));
+  const guyana = countries.filter(ee.Filter.eq('ADM0_NAME', input_country));
   const geometry = guyana.geometry();
 
    // Area land cover per year
@@ -79,18 +83,16 @@ export async function analysisLulc() {
           reducer: ee.Reducer.sum().setOutputs(['area']).group(1, 'lc'),
         });
 
-      // const data = await evaluate(areaLc);
-      // console.log('The year is ' + year)
-      // console.log(data)
+      
       return areaLc;
     })
   );
   // Evaluate the results
   const evaluatedAreas = await evaluate(areas);
-  console.log(evaluatedAreas)
+ 
   // Define the output path for the JSON file
-  const outputPath = path.resolve(__dirname, 'evaluated_areas.json');
-  console.log(__dirname)
+  const outputPath = path.resolve('/Users/danielthorne/ee-webmap/src/data', 'evaluated_areas.json');
+
   // Save the results to a JSON file
   fs.writeFileSync(outputPath, JSON.stringify(evaluatedAreas, null, 2), 'utf8');
   return {evaluatedAreas};
@@ -98,30 +100,29 @@ export async function analysisLulc() {
 
 
 
-export async function transferMatrixLulc() {
+export async function transferMatrixLulc(input_country) {
   await authenticate();
   const area = ee.Image.pixelArea().divide(1e4);
   const imageCollection = ee.ImageCollection("projects/sat-io/open-datasets/GLC-FCS30D/annual")
   .select('b1')
   .mosaic()
-  .rename('y1'); // Year 2000
+  .rename('y1'); 
 
   const imageCollection2 = ee.ImageCollection("projects/sat-io/open-datasets/GLC-FCS30D/annual")
     .select('b23')
     .mosaic()
-    .rename('y2'); // Year 2022
+    .rename('y2'); 
 
 // Load Guyana geometry
 const countries = ee.FeatureCollection('FAO/GAUL/2015/level0');
-const guyana = countries.filter(ee.Filter.eq('ADM0_NAME', 'Guyana'));
+const guyana = countries.filter(ee.Filter.eq('ADM0_NAME', input_country));
 const geometry = guyana.geometry();
-
 // Combine the two bands into one image
 const transitions = imageCollection.addBands(imageCollection2).addBands(area);
 
 // Generate a stratified sample
 const stratifiedSamples = transitions.stratifiedSample({
-  numPoints: 3000, // Total number of points to sample
+  numPoints: 100, // Total number of points to sample
   classBand: 'y1', // Use Year 2000 classes as the stratification band
   region: geometry, // Region to sample from
   scale: 30, // Scale of the dataset (30m resolution)
@@ -156,13 +157,9 @@ const stratifiedSamples = transitions.stratifiedSample({
     reducer: ee.Reducer.toList().repeat(2),
     selectors: ['y1', 'y2']
   });
-
   var uniqueY1Y2 = ee.List(allY1Y2.get('list')).flatten().distinct();
-
   var transferMatrix = await evaluate(transitionDict);
   var uniqueKeys = await evaluate(uniqueY1Y2);
-  console.log(transferMatrix)
-
   return {transferMatrix:transferMatrix, uniqueKeys:uniqueKeys}
 
 }
