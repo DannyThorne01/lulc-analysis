@@ -44,7 +44,7 @@ export async function lulcLayer(input_country) {
     bounds[0][2][1], // north
   ];
 
-  return { urlFormat };
+  return { urlFormat,bounds };
   }else{
     return {}
   }
@@ -68,33 +68,33 @@ export async function analysisLulc(input_country) {
     years.map((year, index)  =>{
       // Image collection
       const clipped_col: ee.ImageCollection = col.filterBounds(geometry);
- 
+      
       const image = ee
         .Image(clipped_col.select(`b${index+1}`).mosaic())
         .rename(`lulc_${year}`);
-
-        const areaLc = area
-        .addBands(image)
-        .clip(geometry)
-        .reduceRegion({
-          geometry,
-          scale: 100,
-          maxPixels: 1e13,
-          reducer: ee.Reducer.sum().setOutputs(['area']).group(1, 'lc'),
-        });
-
-      
+      const areaLc = area
+      .addBands(image)
+      .clip(geometry)
+      .reduceRegion({
+        geometry,
+        scale: 100,
+        maxPixels: 1e9,
+        reducer: ee.Reducer.sum().setOutputs(['area']).group(1, 'lc'),
+      });
       return areaLc;
     })
   );
+  console.log("Got AREAS")
+  
   // Evaluate the results
-  const evaluatedAreas = await evaluate(areas);
+  const evaluatedAreas =  await evaluate(areas);
+  console.log("DONE")
  
-  // Define the output path for the JSON file
-  const outputPath = path.resolve('/Users/danielthorne/ee-webmap/src/data', 'evaluated_areas.json');
+  // // Define the output path for the JSON file
+  // const outputPath = path.resolve('/Users/danielthorne/ee-webmap/src/data', 'evaluated_areas.json');
 
-  // Save the results to a JSON file
-  fs.writeFileSync(outputPath, JSON.stringify(evaluatedAreas, null, 2), 'utf8');
+  // // Save the results to a JSON file
+  // fs.writeFileSync(outputPath, JSON.stringify(evaluatedAreas, null, 2), 'utf8');
   return {evaluatedAreas};
 }
 

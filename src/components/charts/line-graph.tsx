@@ -172,7 +172,7 @@ const StackLineGraph = ({ info }: Props) => {
     .enter()
     .append("path")
     
-    .style("fill", (d) => {return color(d.key); })
+    .style("fill", (d) => {return `#${data.class_color_map[d.key].toUpperCase()}` ; })
     .attr("d", d3.area()
       .x((_, i) => xScale(i))
       .y0((d)=> { return yScale(d[0]) })
@@ -187,7 +187,7 @@ const StackLineGraph = ({ info }: Props) => {
         key={index}
         onClick={() => handleButtonClick(item)}
         style={{
-          backgroundColor: color(item),
+          backgroundColor: `#${data.class_color_map[item].toUpperCase()}`,
           color: "white",
           border: "none",
           borderRadius: "5px",

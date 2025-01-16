@@ -32,6 +32,18 @@ const MapCanvas = () => {
 
   // Layer ID for the GEE overlay
   const eeLayerId = "gee-layer";
+  const calculateZoomLevel = (bounds) => {
+    const WORLD_DIM = { width: 256, height: 256 };
+    const ZOOM_MAX = 20;
+
+    const latDiff = bounds.north - bounds.south;
+    const lngDiff = bounds.east - bounds.west;
+
+    const latZoom = Math.log2(WORLD_DIM.height / latDiff);
+    const lngZoom = Math.log2(WORLD_DIM.width / lngDiff);
+
+    return Math.min(latZoom, lngZoom, ZOOM_MAX);
+  };
 
   // Fetch LULC layer
   useEffect(() => {
@@ -49,9 +61,20 @@ const MapCanvas = () => {
         }
 
         console.log("retrieving data")
-        const { urlFormat } = await lulcLayer(country);;
+        const { urlFormat, bounds } = await lulcLayer(country);
         console.log(urlFormat)
         setTile(urlFormat); // Store the URL in state'
+        const latitude = (bounds.north + bounds.south) / 2;
+        const longitude = (bounds.east + bounds.west) / 2;
+        const zoom = calculateZoomLevel(bounds);
+
+        setViewState({
+          latitude,
+          longitude,
+          zoom,
+          bearing: 0,
+          pitch: 0,
+        });
       } catch (error) {
         console.error("Error loading LULC tiles:", error);
       }
