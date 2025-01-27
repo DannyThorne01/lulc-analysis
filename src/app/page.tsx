@@ -30,7 +30,7 @@ const Page: React.FC = () => {
   // useEffect(() => {
   //   console.log("Updated Country State:", country);
   // }, [country]);
-   
+   // comennenen
   return (
     <div style={{ display: 'flex', height: '100vh', width: '100vw' }}>
 
