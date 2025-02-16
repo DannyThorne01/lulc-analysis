@@ -163,3 +163,64 @@ const stratifiedSamples = transitions.stratifiedSample({
   return {transferMatrix:transferMatrix, uniqueKeys:uniqueKeys}
 
 }
+export async function centerOfGravity(input_country){
+  await authenticate();
+  var countries = ee.FeatureCollection('FAO/GAUL/2015/level0');
+  var guyana = countries.filter(ee.Filter.eq('ADM0_NAME', 'Guyana'));
+  var geometry = guyana.geometry();
+  var years_of_interest = ee.List(['b15', 'b16', 'b17', 'b18', 'b19', 'b20','b21', 'b22']);
+
+ 
+  var calculateYearlyClassCOG = function(stratifiedSamples, classValue) {
+    var filtered = stratifiedSamples.filter(ee.Filter.eq('y1', classValue));
+  
+    // Add longitude and latitude as properties to the filtered features
+    var filteredWithCoords = filtered.map(function(feature) {
+      var coords = feature.geometry().coordinates(); // Extract coordinates
+      return feature.set({
+        longitude: coords.get(0), // Set longitude as a property
+        latitude: coords.get(1)  // Set latitude as a property
+      });
+    });
+    // var color = classColorDict.get(classValue);
+  
+    // Compute the mean of longitude and latitude
+    var cogX = filteredWithCoords.aggregate_mean('longitude');
+    var cogY = filteredWithCoords.aggregate_mean('latitude');
+  
+    // Create a Feature representing the COG
+    return ee.Feature(ee.Geometry.Point([cogX, cogY]), {class: classValue});
+  };
+  var cogFeatureCollection =ee.FeatureCollection(years_of_interest.map(function(element) {
+  
+    var iCol = ee.ImageCollection("projects/sat-io/open-datasets/GLC-FCS30D/annual")
+    .select(ee.String(element))
+    .mosaic()
+    .rename('y1')
+
+    var stratSamp = iCol.stratifiedSample({
+    numPoints: 100,
+    classBand: 'y1',
+    region:geometry,
+    scale:30,
+    geometries:true,
+    classValues: [0, 10, 11, 51, 52, 61, 62, 71, 72, 81, 82, 91, 120, 130, 150, 181, 182, 183, 185, 186, 187, 190, 200, 210], 
+    classPoints: ee.List.sequence(1, 24).map(function(x) {return 100;}),
+    });
+    
+    var y1Values = stratSamp.aggregate_array('y1');
+    var uniqueY1Values = y1Values.distinct();
+
+    
+    return calculateYearlyClassCOG(stratSamp,uniqueY1Values.get(1));
+    // return calculateClassCOG(uniqueY1Values.get(2))
+}))
+var tolist = cogFeatureCollection.toList(cogFeatureCollection.size());
+tolist = await evaluate(tolist)
+var cog_points = await evaluate(cogFeatureCollection)
+console.log("HEreeeee are the COGSS" + cog_points)
+
+console.log("ergegegerg" + tolist)
+return{cogFeatureCollection:cog_points}
+
+}

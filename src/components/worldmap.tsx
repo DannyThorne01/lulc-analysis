@@ -2,7 +2,7 @@
 import { Map, RasterTileSource } from "maplibre-gl";
 import { useContext, useEffect, useState } from "react";
 import "../../node_modules/maplibre-gl/dist/maplibre-gl.css";
-import { analysisLulc, lulcLayer, transferMatrixLulc } from "../module/ee";
+import { analysisLulc, lulcLayer, transferMatrixLulc, centerOfGravity } from "../module/ee";
 import MapComponent, { NavigationControl } from "react-map-gl/maplibre"; 
 import { Context } from '../module/global';
 
@@ -62,6 +62,8 @@ const MapCanvas = () => {
 
         console.log("retrieving data")
         const { urlFormat, bounds } = await lulcLayer(country);
+        const {cogFeatureCollection,uniqueY1Values} = await centerOfGravity(country)
+        console.log(cogFeatureCollection)
         console.log(urlFormat)
         setTile(urlFormat); // Store the URL in state'
         const latitude = (bounds.north + bounds.south) / 2;
