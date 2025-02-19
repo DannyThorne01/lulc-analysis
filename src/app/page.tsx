@@ -13,13 +13,29 @@ const Page: React.FC = () => {
   const [map, setMap] = useState<Map>();
   const [tile, setTile] = useState<string | undefined>(undefined);
   const [heatmapData, setHeatMapData] = useState<Props | undefined>(undefined);
+  const [insightsData, setInsightsData] = useState<Props | undefined>(undefined);
   const [linegraphData, setLineGraphData] = useState<LineGraphProps| undefined>(undefined);
+
   const [country,setCountry] = useState<string>("")
+  const [circleData, setCircleData] = useState({
+    center: { lng: -60, lat: 5 }, // Default position
+    radius: 500000, // Initial radius in meters
+  });
+  const [year, setYear] = useState<number>(2022);
+  const [selectedClass, setSelectedClass] = useState<number>(10);
+  const [seeInsight, setSeeInsight] = useState<boolean>(false)
+
   const contextDict = {
     map,setMap,tile,setTile,
-    heatmapData,setHeatMapData,linegraphData,setLineGraphData,
-    country,setCountry
+    heatmapData,setHeatMapData,linegraphData,setLineGraphData,insightsData,setInsightsData,
+    country,setCountry,
+    circleData,setCircleData,
+    year,setYear,
+    selectedClass, setSelectedClass,
+    seeInsight, setSeeInsight
   };
+  
+
 
   const handleDropDownClick = (event) => {
     const selectedValue = event.target.value
@@ -73,61 +89,7 @@ const Page: React.FC = () => {
       <Context.Provider value={contextDict}><SidePanel /></Context.Provider>
       </div>
 
-      <div
-  style={{
-    position: 'absolute',
-    bottom: '20px',
-    left: '20px',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)', // Semi-transparent background
-    border: '1px solid #ccc',
-    borderRadius: '10px',
-    padding: '10px',
-    display: 'flex',
-    flexDirection: 'column', // Arrange items vertically
-    gap: '10px',
-    zIndex: 1000,
-    maxHeight: '200px', // Restrict height
-    overflowY: 'auto', // Enable vertical scrolling
-    width: '160px', // Adjusted width for the label
-    fontFamily: "'Poppins', sans-serif", // Nicer font
-    fontSize: '11px', // Slightly larger font for better readability
-  }}
->
-  {/* Legend label */}
-  <div
-    style={{
-      textAlign: 'center',
-      fontWeight: 'bold',
-      fontSize: '13px',
-      marginBottom: '10px',
-      color: '#333',
-    }}
-  >
-    Legend
-  </div>
-
-  {/* Legend items */}
-  {Object.entries(data.class_color_map).map(([key, color]) => (
-    <div
-      key={key}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '5px',
-      }}
-    >
-      <div
-        style={{
-          width: '15px',
-          height: '15px',
-          backgroundColor: `#${color}`,
-          borderRadius: '3px',
-        }}
-      ></div>
-      <span style={{ color: '#333' }}>{data.reductions_to_key_inverse[key]}</span>
-    </div>
-  ))}
-</div>
+    
     </div>
   );
 };

@@ -34,16 +34,16 @@ const StackLineGraph = ({ info }: Props) => {
     acc[index] = e.lc; // Use index as the key and e.lc as the value
     return acc;
   }, {});
-  console.log(mappings)
+  // console.log(mappings)
 
   // Extract values with explicit typing
   const values: number[] = Object.values(mappings);
-  console.log(values)
+  // console.log(values)
   // Initialize `mygroup` with 4 random numbers from `values`
   const [mygroup, setMyGroup] = useState<number[]>(() => {
     return values.sort(() => 0.5 - Math.random()).slice(0, 7); // Random 4
   });
-  console.log(mygroup)
+  // console.log(mygroup)
   const [buttons, setButtons] = useState<JSX.Element[]>([]);
   
   const handleDropDownClick = (event) => {
@@ -56,11 +56,11 @@ const StackLineGraph = ({ info }: Props) => {
       return prevMyGroup; // Return the current state if no update is needed
     });
   }
-  console.log("MY group ADD " + mygroup)
+  // console.log("MY group ADD " + mygroup)
   const handleButtonClick = (item) =>{
     setMyGroup(mygroup.filter(value => value !== item));
   }
-  console.log("MY group Deletre " + mygroup)
+  // console.log("MY group Deletre " + mygroup)
    useEffect(() => {
     d3.select(svgRef.current).selectAll("*").remove();
     const dropdown = d3.select("#my-dropdown")
@@ -81,7 +81,7 @@ const StackLineGraph = ({ info }: Props) => {
       return areaValue;
     })(info);
 
-    console.log(stackedData)
+    // console.log(stackedData)
 
     
     const maxByLandCover = allGroups.reduce((acc, group) => {
@@ -126,14 +126,14 @@ const StackLineGraph = ({ info }: Props) => {
     .domain([
       0,
       d3.sum(mygroup, (d) => {
-        console.log("Current group:", d);
-        console.log("Mapping for group:", mappings[values.indexOf(d)]);
-        console.log("MaxByLandCover value:", maxByLandCover[mappings[values.indexOf(d)]]);
+        // console.log("Current group:", d);
+        // console.log("Mapping for group:", mappings[values.indexOf(d)]);
+        // console.log("MaxByLandCover value:", maxByLandCover[mappings[values.indexOf(d)]]);
         return (maxByLandCover[mappings[values.indexOf(d)]] || 0) * 2;
       }),
     ]);
       // .domain(0,d3.max(mygroup,(d)=>{console.log(d)}))
-    console.log(yScale.domain())
+    // console.log(yScale.domain())
 
 
       // color palette

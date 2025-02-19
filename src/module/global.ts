@@ -17,8 +17,23 @@ export type GlobalContext = {
   setLineGraphData: SetState<LineGraphProps>;
   country: string
   setCountry: SetState<string>
+  circleData: CircleData;
+  setCircleData: SetState<CircleData>;
+  year: number
+  setYear: SetState<number>;
+  selectedClass: number;
+  setSelectedClass: SetState<number>;
+  insightsData: Props | undefined; 
+  setInsightsData: SetState<Props>;
+  seeInsight: boolean
+  setSeeInsight: SetState<boolean>;
 
   //
+};
+
+export type CircleData = {
+  center: { lat: number; lng: number };
+  radius: number;
 };
 interface Group {
   area: number; // The area value

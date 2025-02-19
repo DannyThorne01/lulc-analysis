@@ -67,7 +67,7 @@ const HeatMap = ({ info }: Props) => {
   }
 
   const reductions = makeReductions();
-  console.log(reductions)
+ 
 
   
   useEffect(() => {
