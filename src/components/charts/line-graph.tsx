@@ -1,6 +1,7 @@
 import React, { JSX, useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import data from "../../data/lc.json";
+import Dropdown from "../../components/molecules/dropdown"
 
 
 interface Group {
@@ -46,9 +47,11 @@ const StackLineGraph = ({ info }: Props) => {
   // console.log(mygroup)
   const [buttons, setButtons] = useState<JSX.Element[]>([]);
   
+  
   const handleDropDownClick = (event) => {
-    const selectedValue = Number(data.reductions_to_key[event.target.value]);
-    // Use functional update for setMyGroup
+    console.log(event)
+    const selectedValue = Number(data.reductions_to_key[event]);
+
     setMyGroup((prevMyGroup) => {
       if (selectedValue && !prevMyGroup.includes(selectedValue)) {
         return [...prevMyGroup, selectedValue];
@@ -179,9 +182,6 @@ const StackLineGraph = ({ info }: Props) => {
       .y1((d)=> {return yScale(d[1]); })
     )
     .attr("class", (d) => {return mappings[d.key]})
-
-
-    // Generate Buttons
     const newButtons = mygroup.map((item, index) => (
       <button
         key={index}
@@ -202,10 +202,8 @@ const StackLineGraph = ({ info }: Props) => {
       </button>
     ));
     setButtons(newButtons);
-    
+
    },[info,mygroup])
-
-
 
 
    return (
@@ -220,24 +218,26 @@ const StackLineGraph = ({ info }: Props) => {
     >
       <svg ref={svgRef} style={{ display: 'block', maxWidth: '100%'}}></svg>
   
-      {/* Dropdown */}
-      <select
-        id="my-dropdown"
+      <Dropdown
+        options={values.map((value) => data.reductions[data.key_map[value.toString()]])} 
+        // value={data.reductions_to_key_inverse[mygroup[mygroup.length  - 1].toString()]}
         onChange={handleDropDownClick}
+        label="Select a Country"
+        isEditable={false} 
         style={{
-          width: '200px',
-          padding: '10px',
-          margin: '20px 0',
-          fontSize: '16px',
-          border: '1px solid #ccc',
-          borderRadius: '5px',
-          backgroundColor: '#f9f9f9',
-          color: '#333',
-          cursor: 'pointer',
+    
+            width: "400px",
+            padding: "5px",
+            fontSize: "16px",
+            border: "1px solid #ccc",
+            borderRadius: "50px",
+            backgroundColor: "white",
+            color: "#333",
+            cursor: "pointer",
+            marginTop: "20px", 
+     
         }}
-      ></select>
-  
-      {/* Buttons Section */}
+      />
       <div
         style={{
           display: 'flex',

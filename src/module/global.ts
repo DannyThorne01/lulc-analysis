@@ -21,16 +21,28 @@ export type GlobalContext = {
   setCircleData: SetState<CircleData>;
   year: number
   setYear: SetState<number>;
-  selectedClass: number;
+  selectedClass: number | undefined;
   setSelectedClass: SetState<number>;
   insightsData: Props | undefined; 
   setInsightsData: SetState<Props>;
   seeInsight: boolean
   setSeeInsight: SetState<boolean>;
+  showInsights: boolean;
+  setShowInsights: SetState<boolean>;
 
   //
 };
 
+export interface SliderProps {
+  id: string;
+  type: string;
+  min: number;
+  max: number;
+  step: number;
+  value: number;
+  onChange: (value: number) => void;
+  style?: React.CSSProperties; 
+}
 export type CircleData = {
   center: { lat: number; lng: number };
   radius: number;

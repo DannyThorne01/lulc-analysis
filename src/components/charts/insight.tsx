@@ -3,6 +3,7 @@ import * as d3 from "d3";
 import data from "../../data/lc.json"
 import { Context } from '../../module/global';
 import { useContext, useEffect, useState, useRef } from "react";
+import Dropdown from "../../components/molecules/dropdown"
 interface Props {
   info: {
     uniqueKeys: number[];
@@ -16,7 +17,7 @@ interface Transition {
 }
 
 const Insight = ({ info }: Props) => {
- 
+
   const svgRef = useRef<SVGSVGElement | null>(null);
 
   const w = 500;
@@ -58,7 +59,7 @@ const Insight = ({ info }: Props) => {
   }
   // const reductions = makeReductions();
   // console.log("UNIQUE KEYS " + uniqueKeys)
-  console.log(transferMatrix)
+  // console.log(transferMatrix)
   // console.log("REDUCTIONS " + reductions)
 
   const maxPositive = d3.max(transferMatrix.filter(d => d.before === coi), d => d.value) || 0;

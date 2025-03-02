@@ -6,9 +6,9 @@ import lc from '../data/lc.json';
 import * as fs from 'fs'; // Import the filesystem module
 import * as path from 'path'; 
 
-export async function lulcLayer(input_country) {
+export async function lulcLayer(input_country,year) {
   if(input_country!=""){
-    var year = 2022;
+   
   // Authenticate Earth Engine
   await authenticate();
 
@@ -20,25 +20,12 @@ export async function lulcLayer(input_country) {
   const guyana = countries.filter(ee.Filter.eq('ADM0_NAME', input_country));
   const geometry = guyana.geometry();
 
-  // Create image mosaic
   let colBand: ee.ImageCollection = col.select(`b${year-1999}`);
-  const currentYearBand = `b${year - 1999}`;
-  const previousYearBand = `b${year - 2000}`;
-  // Mosaic the image and add visualization
-
-  const colBandCurrent: ee.ImageCollection = col.select(currentYearBand);
-  const colBandPrevious: ee.ImageCollection = col.select(previousYearBand);
-  const imageCurrent: ee.Image = colBandCurrent.mosaic().rename('lulc_current').clip(geometry);
-  const imagePrevious: ee.Image = colBandPrevious.mosaic().rename('lulc_previous').clip(geometry);
   const image: ee.Image = colBand.mosaic().rename('lulc').set({
     lulc_class_names: lc.names,
     lulc_class_palette: lc.palette,
     lulc_class_values: lc.values,
   });
-
-  console.log("IMAGE PREVIOUS "+ imagePrevious)
-
-
 
   // Clip the image to Guyana's boundaries
   const clippedImage: ee.Image = image.clip(geometry);
@@ -105,7 +92,7 @@ export async function lulcLayerbyYear(input_country, year,targetClass) {
   // var maskTargetClass = clippedImage.eq(1)
   // var finalImage = clippedImage.updateMask(maskTargetClass)
   // Visualized the image
-  const clippedImage: ee.Image = image.clip(geometry);
+  const clippedImage: ee.Image = final_image.clip(geometry);
   // Visualized the image
   var visParams = {
     min: 1,  // Since you remapped to start from 1
@@ -113,7 +100,7 @@ export async function lulcLayerbyYear(input_country, year,targetClass) {
     palette: lc.palette  // Ensure the palette is correctly referenced
   };
   // const visualized: ee.Image = clippedImage.visualize();
-  const visualized: ee.Image = final_image.visualize(visParams);
+  const visualized: ee.Image = clippedImage.visualize(visParams);
   // Get image url
   const { urlFormat } = await getMapId(visualized, {});
 
@@ -126,6 +113,11 @@ export async function lulcLayerbyYear(input_country, year,targetClass) {
 }
 export async function insights(input_country,targetClass,year,circleData) {
   if(input_country!=""){
+    console.log("LOADING INSIGHTS...");
+    console.log("Country:",input_country ?? "NULL or UNDEFINED");
+    console.log("Selected Class:", targetClass ?? "NULL or UNDEFINED");
+    console.log("Year:", year ?? "NULL or UNDEFINED");
+    console.log("Circle Data:", circleData ?? "NULL or UNDEFINED");
   let currentYear = year;
   let prevYear = (year == 2000)? 2000: currentYear-1;
 
@@ -195,9 +187,13 @@ export async function insights(input_country,targetClass,year,circleData) {
     reducer: ee.Reducer.toList().repeat(2),
     selectors: ['y1', 'y2']
   });
+  console.log("After All1")
   var uniqueY1Y2 = ee.List(allY1Y2.get('list')).flatten().distinct();
+  console.log("After Uniq")
   var transferMatrix = await evaluate(transitionDict);
+  console.log("trans")
   var uniqueKeys = await evaluate(uniqueY1Y2);
+  console.log("uniqkjnf")
   return {transferMatrix:transferMatrix, uniqueKeys:uniqueKeys}
   }else{
     return {}

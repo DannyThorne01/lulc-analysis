@@ -5,18 +5,22 @@ import Insight from './charts/insight';
 import { Context } from '../module/global';
 import { useContext, useEffect, useState } from "react";
 import { analysisLulc, lulcLayer, transferMatrixLulc,insights} from "../module/ee";
-import evaluatedAreas from '../data/evaluated_areas.json';
+import Dropdown from './molecules/dropdown';
+import data from "../data/lc.json";
+
 
 const SidePanel = () => {
   const context = useContext(Context);
   const [loading, setLoading] = useState(false); // Loading states
   const [loadingInsights , setLoadingInsights] = useState(false)
+  const [values, setValues] = useState<string[]>([]);
+
     if (!context) {
       throw new Error('Context must be used within a ContextProvider');
     }
     const { heatmapData,setHeatMapData,
             linegraphData,setLineGraphData,insightsData, setInsightsData,
-            country, circleData,year, setYear,selectedClass,seeInsight,setSeeInsight } = context;
+            country, circleData,setCircleData,year, setYear,selectedClass,setSelectedClass,showInsights,setShowInsights} = context;
     useEffect(() => {
       if (!country) return;
       async function loadHeatMap() {
@@ -25,10 +29,20 @@ const SidePanel = () => {
           
           const heatmap = await transferMatrixLulc(country); // Slow function
           const linegraph = await analysisLulc(country);
-          console.log(heatmap)
-          // linegData = linegraph
+ 
           setLineGraphData(linegraph.evaluatedAreas)
-          setHeatMapData(heatmap); // Update heatmap data
+          setHeatMapData(heatmap); 
+   
+          if (linegraph.evaluatedAreas.length > 0) {
+            const mappings: Record<number, number> = linegraph.evaluatedAreas[0].groups.reduce((acc, e, index) => {
+              acc[index] = e.lc; // Use index as key, e.lc as value
+              return acc;
+            }, {});
+            const temp = Object.values(mappings);
+            const updatedValues = temp.map((value) => data.reductions[data.key_map[value.toString()]]);
+            
+            setValues(updatedValues);
+          }
         } catch (error) {
           console.error("Error fetching heatmap data:", error);
         } finally {
@@ -37,13 +51,20 @@ const SidePanel = () => {
       }
       loadHeatMap();
     }, [country]);
+
     useEffect(() => {
-      if (!country) return;
+      if (!showInsights) return;
       async function loadInsights() {
+
         setLoadingInsights(true)
         try {
-          console.log("LOADING")
-          const insight = await insights(country,selectedClass,year,circleData)
+          console.log("LOADING INSIGHTS...");
+          console.log("Country:", country ?? "NULL or UNDEFINED");
+          console.log("Selected Class:", selectedClass ?? "NULL or UNDEFINED");
+          console.log("Year:", year ?? "NULL or UNDEFINED");
+          console.log("Circle Data:", circleData ?? "NULL or UNDEFINED");
+          const insight = await insights(country,data.values.indexOf(data.reductions_to_key[selectedClass]),year,circleData)
+          console.log("Repeat")
           setInsightsData(insight)
         }
         catch(error){
@@ -53,139 +74,127 @@ const SidePanel = () => {
         }
       }
       loadInsights()
-    },[year])
+    },[showInsights,year,circleData])
+
   return (
     <div
       style={{
-        position: 'fixed', // Anchors the panel to the viewport
+        position: 'fixed',
         top: 0,
-        right: 0, // Anchors it to the right side
-        width: '30vw', // Takes up 30% of the viewport width
-        height: '100vh', // Full height of the viewport
-        overflowY: 'auto', // Scroll if content overflows
-        backgroundColor: '#f9f9f9',
+        right: 0,
+        width: '30vw', 
+        height: '100vh',
         borderLeft: '1px solid #ccc',
         padding: '20px',
         fontFamily: 'Arial, sans-serif',
-        zIndex: 1000, // Ensures it stays above other content
-        boxShadow: '-2px 0 5px rgba(0, 0, 0, 0.1)', // Subtle shadow for better appearance
+        zIndex: 1000,
+    
         display: 'flex',
-        flexDirection: 'column', // Stacks components vertically
-        gap: '20px', // Adds spacing between components
+        flexDirection: 'column',
       }}
     >
-      {/* HeatMap Section */}
       <div
         style={{
-          flex: '1',
-          padding: '10px',
-          border: '1px solid #ccc',
-          borderRadius: '10px',
-          backgroundColor: '#f9f9f9',
+          overflowY: 'auto', 
+          flex: 1, 
+          maxHeight: '100%',
+          paddingBottom: '120px'
         }}
       >
-        <h3 style={{ textAlign: 'center', marginBottom: '10px' }}>HeatMap</h3>
-                {
-                  loading ? (
-                    <p style={{ textAlign: 'center', color: '#888' }}>Generating...</p>
-                  ) : !heatmapData ? (
-                    <p style={{ textAlign: 'center', color: '#888' }}>NO DATA</p>
-                  ) : (
-                    <HeatMap info={heatmapData} />
-                  )
-                }
-      </div>
-
-      {/* StackLineGraph Section */}
-      <div
-        style={{
-          flex: '1.5',
-          padding: '10px',
-          border: '1px solid #ccc',
-          borderRadius: '5px',
-          backgroundColor: '#f9f9f9',
-   
-        }}
-      >
-        
-        <h3 style={{ textAlign: 'center', marginBottom: '10px' }}>Stack Line Graph</h3>
-       
-        {
-          
-                  loading ? (
-                    <p style={{ textAlign: 'center', color: '#888' }}>Generating...</p>
-                  ) : !linegraphData ? (
-                    <p style={{ textAlign: 'center', color: '#888' }}>NO DATA</p>
-                  ) : (
-                    <StackLineGraph info={linegraphData} />
-                  )
-                }
-        
-      </div>
-      <div style={{ position: "relative", textAlign: "center" }}>
-      {!seeInsight && (
-        <button
-          onClick={() => setSeeInsight(true)}
-          style={{
-            
-            padding: "20px",
-            border: "none",
-            borderRadius: "5px",
-            backgroundColor: "#F4C542",
-            color: "black",
-            cursor: "pointer",
-            marginBottom: "10px",
-            
-          }}
-        >
-          Show Insights
-        </button>
-      )}
-
-      {seeInsight && (
         <div
           style={{
-            flex: "1",
-            padding: "10px",
-            border: "1px solid #ccc",
-            borderRadius: "10px",
-            backgroundColor: "#ececec",
-            position: "relative",
-            maxWidth: "400px",
-            margin: "auto",
+            padding: '10px',
+            border: '1px solid #ccc',
+            borderRadius: '10px',
+            backgroundColor: '#fff',
+            marginBottom: '20px',
           }}
         >
-          <button
-            onClick={() => setSeeInsight(false)}
-            style={{
-              position: "absolute",
-              top: "5px",
-              right: "5px",
-              background: "transparent",
-              border: "none",
-              fontSize: "18px",
-              cursor: "pointer",
-            }}
-          >
-            ✖
-          </button>
-          <h3 style={{ textAlign: "center", marginBottom: "10px" }}>
-            Insights Map
-          </h3>
-          {loadingInsights ? (
-            <p style={{ textAlign: "center", color: "#888" }}>Generating...</p>
-          ) : !insightsData ? (
-            <p style={{ textAlign: "center", color: "#888" }}>NO DATA</p>
+          <h3 style={{ textAlign: 'center', marginBottom: '10px' }}>HeatMap</h3>
+          {loading ? (
+            <p style={{ textAlign: 'center', color: '#888' }}>Generating...</p>
+          ) : !heatmapData ? (
+            <p style={{ textAlign: 'center', color: '#888' }}>NO DATA</p>
           ) : (
-            <Insight info={insightsData} />
+            <HeatMap info={heatmapData} />
           )}
         </div>
-      )}
-    </div>
-    <div></div>
-    
+  
+        <div
+          style={{
+            padding: '10px',
+            border: '1px solid #ccc',
+            borderRadius: '5px',
+            backgroundColor: '#fff',
+            marginBottom: '20px',
+          }}
+        >
+          <h3 style={{ textAlign: 'center', marginBottom: '10px' }}>Stack Line Graph</h3>
+          {loading ? (
+            <p style={{ textAlign: 'center', color: '#888' }}>Generating...</p>
+          ) : !linegraphData ? (
+            <p style={{ textAlign: 'center', color: '#888' }}>NO DATA</p>
+          ) : (
+            <StackLineGraph info={linegraphData} />
+          )}
+        </div>
+        <div
+          style={{
+            padding: '10px',
+            border: '1px solid #ccc',
+            borderRadius: '5px',
+            backgroundColor: '#fff',
+            position: "relative",
+            marginBottom: '20px',
+          }}
+        >
+          <h3 style={{ textAlign: 'center', marginBottom: '10px' }}>
+            Insights Graph
+          </h3>
+  
+          {insightsData && (
+            <button
+              onClick={() => {
+                setInsightsData(undefined);
+                setShowInsights(false);
+                setSelectedClass(undefined);
+              }}
+              style={{
+                position: "absolute",
+                top: "10px",
+                right: "10px",
+                background: "none",
+                border: "none",
+                fontSize: "16px",
+                cursor: "pointer",
+                color: "#333",
+              }}
+            >
+              ← Back
+            </button>
+          )}
+  
+          {loadingInsights ? (
+            <p style={{ textAlign: "center", color: "#888" }}>Generating...</p>
+          ) : insightsData ? (
+            <Insight info={insightsData} />
+          ) : (
+            <>
+              <Dropdown
+                options={values}
+                onChange={(selected) => {
+                  setSelectedClass(selected)
+                  setShowInsights(true)
+                }}
+                isEditable={true}
+              />
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
+  
 };
 
 export default SidePanel;
