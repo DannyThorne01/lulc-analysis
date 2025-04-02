@@ -4,6 +4,9 @@ import { MapId, VisObject } from './global';
 import dotenv from "dotenv";
 dotenv.config({ path: "../../.env" });
 
+process.env.XMLHTTPREQUEST_TEMP_DIR = '/tmp';
+process.env.EE_LOGGING = 'true';
+
 /**
  * Function to authenticate and initialize earth engine using google service account private key
  * This function is made so that authentication doesnt have to use callback but with promise (better to read)
