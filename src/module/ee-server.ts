@@ -11,7 +11,7 @@ dotenv.config({ path: "../../.env" });
  * @returns {Promise<void>} did not return anything
  */
 export function authenticate(): Promise<void> {
-  const serviceAccountKey = process.env.service_account_key;
+  const serviceAccountKey = process.env.EE_API_KEY;
 
   if (!serviceAccountKey) {
     throw new Error("Environment variable 'service_account_key' is not set.");
