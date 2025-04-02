@@ -15,16 +15,17 @@ interface Info {
 
 interface Props {
   info: Info[]; // Array of Info objects
+  vals: string[]
 }
 
-const StackLineGraph = ({ info }: Props) => {
+const StackLineGraph = ({ info,vals }: Props) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const w = 600;
   const h = 600;
   const m = { top: 40, right: 30, bottom: 100, left: 100 };
   const slinegraphWidth = w - m.left - m.right;
   const slinegraphHeight = h - m.top - m.bottom;
-
+  console.log(vals)
   
 
   const allGroups = info.flatMap((year) => year.groups);
@@ -35,35 +36,28 @@ const StackLineGraph = ({ info }: Props) => {
     acc[index] = e.lc; // Use index as the key and e.lc as the value
     return acc;
   }, {});
-  // console.log(mappings)
 
-  // Extract values with explicit typing
   const values: number[] = Object.values(mappings);
-  // console.log(values)
-  // Initialize `mygroup` with 4 random numbers from `values`
   const [mygroup, setMyGroup] = useState<number[]>(() => {
     return values.sort(() => 0.5 - Math.random()).slice(0, 7); // Random 4
   });
-  // console.log(mygroup)
   const [buttons, setButtons] = useState<JSX.Element[]>([]);
   
   
   const handleDropDownClick = (event) => {
-    console.log(event)
     const selectedValue = Number(data.reductions_to_key[event]);
-
     setMyGroup((prevMyGroup) => {
       if (selectedValue && !prevMyGroup.includes(selectedValue)) {
         return [...prevMyGroup, selectedValue];
       }
-      return prevMyGroup; // Return the current state if no update is needed
+      return prevMyGroup;
     });
   }
-  // console.log("MY group ADD " + mygroup)
+
   const handleButtonClick = (item) =>{
     setMyGroup(mygroup.filter(value => value !== item));
   }
-  // console.log("MY group Deletre " + mygroup)
+
    useEffect(() => {
     d3.select(svgRef.current).selectAll("*").remove();
     const dropdown = d3.select("#my-dropdown")
@@ -219,23 +213,19 @@ const StackLineGraph = ({ info }: Props) => {
       <svg ref={svgRef} style={{ display: 'block', maxWidth: '100%'}}></svg>
   
       <Dropdown
-        options={values.map((value) => data.reductions[data.key_map[value.toString()]])} 
+        options={vals} 
         // value={data.reductions_to_key_inverse[mygroup[mygroup.length  - 1].toString()]}
         onChange={handleDropDownClick}
         label="Select a Country"
-        isEditable={false} 
+        isEditable={true} 
         style={{
-    
-            width: "400px",
-            padding: "5px",
             fontSize: "16px",
-            border: "1px solid #ccc",
+            // border: "1px solid #ccc",
             borderRadius: "50px",
             backgroundColor: "white",
             color: "#333",
             cursor: "pointer",
             marginTop: "20px", 
-     
         }}
       />
       <div

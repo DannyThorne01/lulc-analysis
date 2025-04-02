@@ -4,7 +4,7 @@ import StackLineGraph from './charts/line-graph'; // Assuming StackLineGraph is 
 import Insight from './charts/insight';
 import { Context } from '../module/global';
 import { useContext, useEffect, useState } from "react";
-import { analysisLulc, lulcLayer, transferMatrixLulc,insights} from "../module/ee";
+import { analysisLulc, lulcLayer, transferMatrixLulc,bruv} from "../module/ee";
 import Dropdown from './molecules/dropdown';
 import data from "../data/lc.json";
 
@@ -28,6 +28,7 @@ const SidePanel = () => {
         try {
           
           const heatmap = await transferMatrixLulc(country); // Slow function
+          console.log(heatmap)
           const linegraph = await analysisLulc(country);
  
           setLineGraphData(linegraph.evaluatedAreas)
@@ -63,7 +64,7 @@ const SidePanel = () => {
           console.log("Selected Class:", selectedClass ?? "NULL or UNDEFINED");
           console.log("Year:", year ?? "NULL or UNDEFINED");
           console.log("Circle Data:", circleData ?? "NULL or UNDEFINED");
-          const insight = await insights(country,data.values.indexOf(data.reductions_to_key[selectedClass]),year,circleData)
+          const insight = await bruv(country,data.values.indexOf(data.reductions_to_key[selectedClass]),year,circleData)
           console.log("Repeat")
           setInsightsData(insight)
         }
@@ -135,7 +136,7 @@ const SidePanel = () => {
           ) : !linegraphData ? (
             <p style={{ textAlign: 'center', color: '#888' }}>NO DATA</p>
           ) : (
-            <StackLineGraph info={linegraphData} />
+            <StackLineGraph info={linegraphData} vals={values} />
           )}
         </div>
         <div
@@ -151,7 +152,6 @@ const SidePanel = () => {
           <h3 style={{ textAlign: 'center', marginBottom: '10px' }}>
             Insights Graph
           </h3>
-  
           {insightsData && (
             <button
               onClick={() => {
@@ -193,7 +193,7 @@ const SidePanel = () => {
         </div>
       </div>
     </div>
-  );
+  )
   
 };
 

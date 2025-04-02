@@ -1,9 +1,8 @@
 
 import * as d3 from "d3";
 import data from "../../data/lc.json"
-import { Context } from '../../module/global';
 import { useContext, useEffect, useState, useRef } from "react";
-import Dropdown from "../../components/molecules/dropdown"
+
 interface Props {
   info: {
     uniqueKeys: number[];
@@ -19,15 +18,14 @@ interface Transition {
 const Insight = ({ info }: Props) => {
 
   const svgRef = useRef<SVGSVGElement | null>(null);
-
   const w = 500;
   const h = 500;
   const m = { top: 40, right: 30, bottom: 100, left: 100 };
   const insightWidth = w - m.left - m.right;
   const insightHeight = h - m.top - m.bottom;
+  const sectionHeight = insightHeight / 2;
 
   var coi:number;
-  
   var transferMatrix :Transition[]= Object.entries(info['transferMatrix']).map(([key, value]) => {
     const [before, after] = key.split("_").map((num) => parseInt(num, 10));
       if (before === after) coi = before
@@ -35,104 +33,105 @@ const Insight = ({ info }: Props) => {
   });
 
   transferMatrix = transferMatrix.filter(d => d.before !== d.after)
- 
-  var uniqueKeys = info.uniqueKeys.map((key) => {
-    if (coi != key)
-    return(data.key_map[key.toString()])
-  })
   var uniqueChar = new Set(info.uniqueKeys.filter(key => key !== coi));
 
+  const inflows = transferMatrix.filter(d => d.after === coi);
+  const outflows = transferMatrix.filter(d => d.before === coi);
 
-  function makeReductions(){
-    var reductions: String[] =[]
-    var discovered = new Set();
-    uniqueKeys.forEach((key) => {
-      if (!discovered.has(key)) {
-        discovered.add(key);
-        let red:String = data.reductions[key]
-        if(red){
-          reductions.push(red)
-        }
-      }
-    })
-    return reductions
-  }
-  // const reductions = makeReductions();
-  // console.log("UNIQUE KEYS " + uniqueKeys)
-  // console.log(transferMatrix)
-  // console.log("REDUCTIONS " + reductions)
-
-  const maxPositive = d3.max(transferMatrix.filter(d => d.before === coi), d => d.value) || 0;
-  const maxNegative = d3.max(transferMatrix.filter(d => d.after === coi), d => d.value) || 0;
+  // Find max values for scaling
+  const maxInflow = d3.max(inflows, d => d.value) || 1;
+  const maxOutflow = d3.max(outflows, d => d.value) || 1;
  
+  console.log(transferMatrix)
+  console.log(inflows)
+  console.log(outflows)
+  console.log(maxInflow)
+  console.log(maxOutflow)
 
 
   useEffect(() => {
     if (!svgRef.current) return;
-
-    d3.select(svgRef.current).selectAll("*").remove();
-    const d3svg = d3
-      .select(svgRef.current)
+    const d3svg = d3.select(svgRef.current)
       .attr("viewBox", `0 0 ${w} ${h}`)
-      .style("background-color", "#d9d9d9");
-
-    // Scales
-    const xScale = d3
-    .scaleBand()
-    .range([0, insightWidth])
-    .domain(uniqueChar)
-    .padding(.1);
-   
-    const yScale = d3.scaleLinear()
-  .range([insightHeight, 0]) // Ensures correct positioning
-  .domain([-maxNegative, maxPositive]); 
-    
-
-  // Axes
-  const xAxis = d3.axisBottom(xScale);
-  // const yAxis = d3.axisLeft(yScalePositive);
-  const yAxis = d3.axisLeft(yScale);
+      .style("background", "#f8f9fa");
+    d3svg.selectAll("*").remove();
   
-  d3svg.append("g")
-  .attr("transform", `translate(${m.left}, ${insightHeight + m.top})`)
-  .call(xAxis);
-
-// d3svg.append("g")
-//   .attr("transform", `translate(${m.left}, ${m.top})`)
-//   .call(yAxis);
-d3svg.append("g")
-  .attr("transform", `translate(${m.left}, ${m.top})`)
-  .call(yAxis);
-
-// Bars
-d3svg.append("g")
-  .attr("transform", `translate(${m.left}, ${m.top})`)
-  .selectAll("rect")
-  .data(transferMatrix)
-  .enter()
-  .append("rect")
-
-  .attr("x", d => parseInt(d.before) === coi? xScale(parseInt(d.after))+ xScale.bandwidth()/4 :xScale(parseInt(d.before)) + xScale.bandwidth()/4)
-  .attr("y", d => 
-    parseInt(d.before) === coi
-      ? yScale(parseInt(d.value)) // Bars grow UP
-      : yScale(0) // Bars grow DOWN
-  )
-  .attr("width", xScale.bandwidth() * 0.6)
-  .attr("height", d => 
-    Math.abs(yScale(0) - yScale(parseInt(d.value))) // Compute correct bar height
-  )
-  .attr("fill", d => parseInt(d.before) === coi ? `#${data.class_color_map[d.after.toString()]}` : `#${data.class_color_map[d.before.toString()]}`)
-  .attr("rx", 5)
-  .attr("ry", 5);
-   // Blue for 10 → X, Red for X → 10
-    },[info])
+    // Prepare data with log adjustment
+    const inflows = transferMatrix.filter(d => d.after === coi);
+    const outflows = transferMatrix.filter(d => d.before === coi);
     
+    // Add epsilon to handle zero values (if any)
+    const logAdjust = (val: number) => val === 0 ? 0.1 : val;
+  
+    // Calculate domains with log adjustment
+    const maxOutflow = d3.max(outflows, d => logAdjust(d.value)) || 1;
+    // const minOutflow = d3.max(outflows, d => logAdjust(d.value)) || 1;
+    const maxInflow = d3.max(inflows, d => logAdjust(d.value)) || 1;
+  
+    // Log scales
+    const xScale = d3.scaleBand()
+      .domain(uniqueChar)
+      .range([0, insightWidth])
+      .padding(0.2);
+  
+    const yScaleTop = d3.scaleLog()
+      .domain([0.1, maxOutflow]) // Start above zero for log scale
+      .range([sectionHeight, 0])
+      .nice();
+  
+    const yScaleBottom = d3.scaleLog()
+      .domain([0.1, maxInflow])
+      .range([0, sectionHeight])
+      .nice();
+  
+    // Create groups
+    const topGroup = d3svg.append("g")
+      .attr("transform", `translate(${m.left}, ${m.top})`);
+    
+    const bottomGroup = d3svg.append("g")
+      .attr("transform", `translate(${m.left}, ${m.top + sectionHeight})`);
+  
+    // Draw bars with log scaling
+    topGroup.selectAll("rect")
+      .data(outflows)
+      .enter().append("rect")
+      .attr("x", d => xScale(d.after)!)
+      .attr("y", d => yScaleTop(logAdjust(d.value)))
+      .attr("width", xScale.bandwidth())
+      .attr("height", d => sectionHeight - yScaleTop(logAdjust(d.value)))
+      .attr("fill", d => `#${data.class_color_map[d.after]}`)
+      .attr('rx', 5)
+      .attr('ry', 5)
+  
+    bottomGroup.selectAll("rect")
+      .data(inflows)
+      .enter().append("rect")
+      .attr("x", d => xScale(d.before)!)
+      .attr("y", 0)
+      .attr("width", xScale.bandwidth())
+      .attr("height", d => yScaleBottom(logAdjust(d.value)))
+      .attr("fill", d => `#${data.class_color_map[d.before]}`)
+      .attr('rx', 5)
+      .attr('ry', 5)
+  
+    // // Log-scaled axes
+    // const formatTick = (d: number) => 
+    //   d >= 1000 ? `${d/1000}M` : d === 0.1 ? "~0" : d;
+  
+    // topGroup.append("g")
+    //   .call(d3.axisLeft(yScaleTop))
+    //   .selectAll(".tick text")
+    //   .text(d => formatTick(d));
+  
+    // bottomGroup.append("g")
+    //   .call(d3.axisLeft(yScaleBottom))
+    //   .selectAll(".tick text")
+    //   .text(d => formatTick(d));
 
+  }, [info]);
   return(
     <>
-   
-   <svg ref={svgRef}></svg>;
+   <svg ref={svgRef}></svg>
     </>
    
   )

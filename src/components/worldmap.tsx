@@ -2,7 +2,7 @@
 import { Map, RasterTileSource } from "maplibre-gl";
 import { useCallback, useContext, useEffect, useState } from "react";
 import "../../node_modules/maplibre-gl/dist/maplibre-gl.css";
-import { analysisLulc, lulcLayer, transferMatrixLulc, centerOfGravity, lulcLayerbyYear } from "../module/ee";
+import { lulcLayer, lulcLayerbyYear } from "../module/ee";
 import MapComponent, { NavigationControl } from "react-map-gl/maplibre"; 
 import { Context , CircleData} from '../module/global';
 import data from '../data/lc.json';
@@ -11,10 +11,10 @@ import CircleComponent from "../components/molecules/circle";
 
 const MapCanvas = () => {
   // Declare state variables
-  const MAP_STYLE = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
+  const MAP_STYLE = "https://tiles.stadiamaps.com/styles/alidade_smooth.json";
 
   const INITIAL_VIEW_STATE = {
-    latitude: 0, // Centered on the world
+    latitude: 0,
     longitude: 0,
     zoom: 2,
     bearing: 0,
@@ -27,18 +27,15 @@ const MapCanvas = () => {
   }
 
   const { map, setMap, tile, setTile, country,circleData,setCircleData,year, setYear, selectedClass, setSelectedClass,showInsights,setShowInsights} = context;
+
   const sliderValueChanged = useCallback((val: number) => {
-    console.log("NEW VALUE", val);
     setYear(val);
     }, [setYear]);
+
   const circleValueChanged = useCallback((val: CircleData) => {
       setCircleData(val);
       }, [setCircleData]);
 
-  const [viewState, setViewState] = useState(INITIAL_VIEW_STATE);
-  const [layerAdded, setLayerAdded] = useState(false);
- console.log(circleData)
- console.log(year)
   // Layer ID for the GEE overlay
   const eeLayerId = "gee-layer";
   const calculateZoomLevel = (bounds) => {
@@ -69,7 +66,6 @@ const MapCanvas = () => {
           console.log("Existing tiles cleared.");
         }
 
-        console.log("retrieving data")
         // const {urlFormat, bounds } = await lulcLayer(country);
         var urlFormat:string|undefined = ""
         if(showInsights){
@@ -77,6 +73,8 @@ const MapCanvas = () => {
             urlFormat = response.urlFormat
         }else{
             var response = await lulcLayer(country,year)
+            console.log("ETOSNNGINTTT")
+            console.log(response)
             urlFormat = response.urlFormat
         }
         
@@ -136,7 +134,7 @@ const MapCanvas = () => {
     value: year, 
     onChange: sliderValueChanged, 
 };
-  return (
+  return(
     <>
     <MapComponent
   id="map"
@@ -157,7 +155,6 @@ const MapCanvas = () => {
     />
   )}
 </MapComponent>
-    return (
       <div
       style={{
         position: "absolute",
@@ -250,10 +247,9 @@ const MapCanvas = () => {
         );
       })}
     </div>
-  );
+  
     </>
-   
-    
+
   );
 };
 

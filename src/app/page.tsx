@@ -39,13 +39,6 @@ const Page: React.FC = () => {
     showInsights, setShowInsights
   };
   
-
-
-
-  // useEffect(() => {
-  //   console.log("Updated Country State:", country);
-  // }, [country]);
-   // comennenen
   return (
     <div style={{ display: 'flex', height: '100vh', width: '100vw' }}>
       <Dropdown
@@ -62,10 +55,10 @@ const Page: React.FC = () => {
           width: '400px',
           padding: '5px',
           fontSize: '16px',
-          border: '1px solid #ccc',
+          // border: '1px solid #ccc',
           borderRadius: '50px',
-          backgroundColor: 'white',
-          color: '#333',
+          // backgroundColor: 'white',
+          // color: '#333',
           cursor: 'pointer',
           zIndex: 1000,
         }}
@@ -78,11 +71,9 @@ const Page: React.FC = () => {
       </div>
 
       {/* Side Panel (Optional) */}
-      <div style={{ flex: 1, overflow: 'auto' }}>
+      {/* <div style={{ flex: 1, overflow: 'auto' }}>
       <Context.Provider value={contextDict}><SidePanel /></Context.Provider>
-      </div>
-
-    
+      </div> */}
     </div>
   );
 };

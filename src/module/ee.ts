@@ -48,7 +48,6 @@ export async function lulcLayer(input_country,year) {
   }
 }
 
-
 export async function lulcLayerbyYear(input_country, year,targetClass) {
   if(input_country!=""){
     year = 2020;
@@ -110,6 +109,74 @@ export async function lulcLayerbyYear(input_country, year,targetClass) {
   }else{
     return {}
   }
+}
+
+export async function bruv(input_country,targetClass,year,circleData){
+  if(input_country!=""){
+    const startTime = Date.now();
+    console.log("LOADING INSIGHTS...");
+    console.log("Country:",input_country ?? "NULL or UNDEFINED");
+    console.log("Selected Class:", targetClass ?? "NULL or UNDEFINED");
+    console.log("Year:", year ?? "NULL or UNDEFINED");
+    console.log("Circle Data:", circleData ?? "NULL or UNDEFINED");
+  let currentYear = year;
+  let prevYear = (year == 2000)? 2000: currentYear-1;
+
+  targetClass = parseInt(targetClass,10);
+  await authenticate();
+  const circleRegion = ee.Geometry.Point([circleData.center.lng, circleData.center.lat])
+  .buffer(circleData.radius);
+  const col = ee.ImageCollection("projects/sat-io/open-datasets/GLC-FCS30D/annual");
+  let image_at_year1 = col.mosaic().select(`b${currentYear - 1999}`).rename('y1');
+  let image_at_year2 = col.mosaic().select(`b${prevYear - 1999}`).rename('y2');
+
+  const area = ee.Image.pixelArea().divide(1e4);
+  const transitions = image_at_year1.addBands(image_at_year2).addBands(area);
+  const stratifiedSamples = transitions.stratifiedSample({
+    numPoints: 200, 
+    classBand: 'y1',
+    region: circleRegion, 
+    scale: 30,
+    geometries: true,
+    classValues: [0, 10, 11, 51, 52, 61, 62, 71, 72, 81, 82, 91, 120, 130, 150, 181, 182, 183, 185, 186, 187, 190, 200, 210],
+    classPoints: Array(24).fill(200),
+  });
+
+    var y1Values = stratifiedSamples.aggregate_array('y1');
+    var uniqueY1Values = y1Values.distinct();
+    const targetValue = uniqueY1Values.get(targetClass);
+    console.log("AYYEYEYYEYEE" + await evaluate(targetValue))
+    const filteredSamples = stratifiedSamples.filter(
+      ee.Filter.or(
+        ee.Filter.eq("y1", uniqueY1Values.get(targetClass)),
+        ee.Filter.eq("y2", uniqueY1Values.get(targetClass))
+      )
+    )
+    const samplesWithTransition = filteredSamples.map(function(feature) {
+      const y1 = ee.Number(feature.get('y1'));
+      const y2 = ee.Number(feature.get('y2'));
+      const transitionKey = y1.format('%d').cat('_').cat(y2.format('%d'));
+      return feature.set('transition', transitionKey);
+    });
+    const transitionCounts = samplesWithTransition.aggregate_histogram('transition');
+    var uniqueClasses = ee.List([
+      stratifiedSamples.aggregate_array('y1'), 
+      stratifiedSamples.aggregate_array('y2')  
+    ]).flatten().distinct();
+    var transferMatrix = await evaluate(transitionCounts);
+    var uniqueKeys = await evaluate(uniqueClasses);
+  
+    // Define the output path for the JSON file
+    const outputPath = path.resolve('/Users/danielthorne/ee-webmap/src/data', 'insightsfake.json');
+  
+    // Save the results to a JSON file
+    fs.writeFileSync(outputPath, JSON.stringify(transferMatrix, null, 2), 'utf8');
+    const runtime = (Date.now() - startTime) / 1000; // Calculate runtime in seconds
+    console.log(`Function executed in ${runtime.toFixed(2)} seconds`);
+    return {transferMatrix:transferMatrix, uniqueKeys:uniqueKeys}
+
+  }
+  
 }
 export async function insights(input_country,targetClass,year,circleData) {
   if(input_country!=""){
@@ -248,129 +315,51 @@ export async function analysisLulc(input_country) {
 }
 
 export async function transferMatrixLulc(input_country) {
+  const startTime = Date.now();
   await authenticate();
-  const area = ee.Image.pixelArea().divide(1e4);
-  const imageCollection = ee.ImageCollection("projects/sat-io/open-datasets/GLC-FCS30D/annual")
-  .select('b1')
+  const countries = ee.FeatureCollection('FAO/GAUL/2015/level0');
+  const guyana = countries.filter(ee.Filter.eq('ADM0_NAME', input_country));
+  const geometry = guyana.geometry().simplify({maxError: 100});
+  const transitions = ee.ImageCollection("projects/sat-io/open-datasets/GLC-FCS30D/annual")
+  .select(['b1', 'b23'])
   .mosaic()
-  .rename('y1'); 
+  .rename(['y1', 'y2'])
+  .clip(geometry);
 
-  const imageCollection2 = ee.ImageCollection("projects/sat-io/open-datasets/GLC-FCS30D/annual")
-    .select('b23')
-    .mosaic()
-    .rename('y2'); 
+  const classValues = [0, 10, 11, 51, 52, 61, 62, 71, 72, 81, 82, 91, 
+    120, 130, 150, 181, 182, 183, 185, 186, 187, 190, 200, 210];
 
-// Load Guyana geometry
-const countries = ee.FeatureCollection('FAO/GAUL/2015/level0');
-const guyana = countries.filter(ee.Filter.eq('ADM0_NAME', input_country));
-const geometry = guyana.geometry();
-// Combine the two bands into one image
-const transitions = imageCollection.addBands(imageCollection2).addBands(area);
-
-// Generate a stratified sample
-const stratifiedSamples = transitions.stratifiedSample({
-  numPoints: 100, // Total number of points to sample
-  classBand: 'y1', // Use Year 2000 classes as the stratification band
-  region: geometry, // Region to sample from
-  scale: 30, // Scale of the dataset (30m resolution)
-  geometries: true, // Include geometry information for each point
-  classValues: [0, 10, 11, 51, 52, 61, 62, 71, 72, 81, 82, 91, 120, 130, 150, 181, 182, 183, 185, 186, 187, 190, 200, 210], // Your LULC class values
-  classPoints: Array(24).fill(100), // Number of points per class
+  // Breakdown this Stratifying Sampling technique
+  const stratifiedSamples = transitions.stratifiedSample({
+    numPoints: 500, 
+    classBand: 'y1', 
+    region: geometry, 
+    scale: 23,
+    geometries: true, 
+    classValues: classValues, 
+    classPoints: Array(24).fill(500),
   });
-
-
-  var dict = ee.Dictionary({}); // Initialize an empty dictionary
-
-  // Use iterate to populate the dictionary
-  var transitionDict = stratifiedSamples.iterate(function(feature, currentDict) {
-    currentDict = ee.Dictionary(currentDict); // Ensure it's a Dictionary
-
-    var y1 = feature.get('y1');
-    var y2 = feature.get('y2');
-
-    var key = ee.String(y1).cat('_').cat(ee.String(y2));
-
-    // Increment the count for this key
-    var count = ee.Number(currentDict.get(key, 0)).add(1);
-    return currentDict.set(key, count); // Update the dictionary
-  }, dict);
-
-  // Separate logic for unique values
-  var allY1Y2 = stratifiedSamples.map(function(feature) {
-    var y1 = feature.get('y1');
-    var y2 = feature.get('y2');
-    return ee.Feature(null, { y1: y1, y2: y2 });
-  }).reduceColumns({
-    reducer: ee.Reducer.toList().repeat(2),
-    selectors: ['y1', 'y2']
+  const samplesWithTransition = stratifiedSamples.map(function(feature) {
+    const y1 = ee.Number(feature.get('y1'));
+    const y2 = ee.Number(feature.get('y2'));
+    const transitionKey = y1.format('%d').cat('_').cat(y2.format('%d'));
+    return feature.set('transition', transitionKey);
   });
-  var uniqueY1Y2 = ee.List(allY1Y2.get('list')).flatten().distinct();
-  var transferMatrix = await evaluate(transitionDict);
-  var uniqueKeys = await evaluate(uniqueY1Y2);
+  const transitionCounts = samplesWithTransition.aggregate_histogram('transition');
+
+  var uniqueClasses = ee.List([
+    stratifiedSamples.aggregate_array('y1'), 
+    stratifiedSamples.aggregate_array('y2')  
+  ]).flatten().distinct();
+  var transferMatrix = await evaluate(transitionCounts);
+  var uniqueKeys = await evaluate(uniqueClasses);
+
+  // Define the output path for the JSON file
+  const outputPath = path.resolve('/Users/danielthorne/ee-webmap/src/data', 'transferfake.json');
+
+  // Save the results to a JSON file
+  fs.writeFileSync(outputPath, JSON.stringify(transferMatrix, null, 2), 'utf8');
+  const runtime = (Date.now() - startTime) / 1000; // Calculate runtime in seconds
+  console.log(`Function executed in ${runtime.toFixed(2)} seconds`);
   return {transferMatrix:transferMatrix, uniqueKeys:uniqueKeys}
-
-}
-
-
-
-export async function centerOfGravity(input_country){
-  await authenticate();
-  var countries = ee.FeatureCollection('FAO/GAUL/2015/level0');
-  var guyana = countries.filter(ee.Filter.eq('ADM0_NAME', 'Guyana'));
-  var geometry = guyana.geometry();
-  var years_of_interest = ee.List(['b15', 'b16', 'b17', 'b18', 'b19', 'b20','b21', 'b22']);
-
- 
-  var calculateYearlyClassCOG = function(stratifiedSamples, classValue) {
-    var filtered = stratifiedSamples.filter(ee.Filter.eq('y1', classValue));
-  
-    // Add longitude and latitude as properties to the filtered features
-    var filteredWithCoords = filtered.map(function(feature) {
-      var coords = feature.geometry().coordinates(); // Extract coordinates
-      return feature.set({
-        longitude: coords.get(0), // Set longitude as a property
-        latitude: coords.get(1)  // Set latitude as a property
-      });
-    });
-    // var color = classColorDict.get(classValue);
-  
-    // Compute the mean of longitude and latitude
-    var cogX = filteredWithCoords.aggregate_mean('longitude');
-    var cogY = filteredWithCoords.aggregate_mean('latitude');
-  
-    // Create a Feature representing the COG
-    return ee.Feature(ee.Geometry.Point([cogX, cogY]), {class: classValue});
-  };
-  var cogFeatureCollection =ee.FeatureCollection(years_of_interest.map(function(element) {
-  
-    var iCol = ee.ImageCollection("projects/sat-io/open-datasets/GLC-FCS30D/annual")
-    .select(ee.String(element))
-    .mosaic()
-    .rename('y1')
-
-    var stratSamp = iCol.stratifiedSample({
-    numPoints: 100,
-    classBand: 'y1',
-    region:geometry,
-    scale:30,
-    geometries:true,
-    classValues: [0, 10, 11, 51, 52, 61, 62, 71, 72, 81, 82, 91, 120, 130, 150, 181, 182, 183, 185, 186, 187, 190, 200, 210], 
-    classPoints: ee.List.sequence(1, 24).map(function(x) {return 100;}),
-    });
-    
-    var y1Values = stratSamp.aggregate_array('y1');
-    var uniqueY1Values = y1Values.distinct();
-
-    
-    return calculateYearlyClassCOG(stratSamp,uniqueY1Values.get(1));
-    // return calculateClassCOG(uniqueY1Values.get(2))
-}))
-var tolist = cogFeatureCollection.toList(cogFeatureCollection.size());
-tolist = await evaluate(tolist)
-var cog_points = await evaluate(cogFeatureCollection)
-console.log("HEreeeee are the COGSS" + cog_points)
-
-console.log("ergegegerg" + tolist)
-return{cogFeatureCollection:cog_points}
-
 }

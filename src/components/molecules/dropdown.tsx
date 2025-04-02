@@ -47,15 +47,14 @@ const Dropdown: React.FC<DropdownProps> = ({ options, value ="", onChange, label
         type="text"
         value={isEditable ? inputValue: ""}
         onChange={handleInputChange}
-        // onFocus={() => setIsDropdownOpen(true)}
         onClick={() => setIsDropdownOpen(true)} 
         onBlur={handleBlur}
         placeholder="Select or type..."
         readOnly={!isEditable}
         style={{
           width: '100%',
-          padding: '12px',
-          fontSize: '16px',
+          padding: '5px',
+          fontSize: '15px',
           border: '2px solid #f9f9f9',
           borderRadius: '50px',
           color: '#333',
@@ -69,21 +68,16 @@ const Dropdown: React.FC<DropdownProps> = ({ options, value ="", onChange, label
 {isDropdownOpen && filteredOptions.length > 0 && (
         <ul
         style={{
-          position: "absolute",
-          zIndex: 1001,
-          marginTop: "2px",
+          marginTop: "8px",
           width: "100%",
-          backgroundColor: "#ffffff",
-          color: "#000000",
+          backgroundColor: "#fff",
           borderRadius: "8px",
-          padding: "5px",
-          left: "0", 
-          maxHeight: "180px", 
+          padding: "8px 0",
+          maxHeight: "200px",
           overflowY: "auto",
-          border: "1px solid #ccc",
-          fontSize: "14px", 
-          boxSizing: "border-box", 
-          whiteSpace: "nowrap", 
+          border: "1px solid #e0e0e0",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+          fontSize: "14px"
         }}
       >
           {filteredOptions.map((option) => (
