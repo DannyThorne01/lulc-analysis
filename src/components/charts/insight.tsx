@@ -1,21 +1,17 @@
 
 import * as d3 from "d3";
 import data from "../../data/lc.json"
-import { useContext, useEffect, useState, useRef } from "react";
+import { useEffect, useRef } from "react";
+import {Props} from "../../module/global"
 
-interface Props {
-  info: {
-    uniqueKeys: number[];
-    matrix: { [key: string]: number };
-  };
-}
+
 interface Transition {
   before: number,
   after: number,
   value:number
 }
 
-const Insight = ({ info }: Props) => {
+const Insight = ({ uniqueKeys, matrix }: Props) => {
 
   const svgRef = useRef<SVGSVGElement | null>(null);
   const w = 500;
@@ -26,14 +22,18 @@ const Insight = ({ info }: Props) => {
   const sectionHeight = insightHeight / 2;
 
   var coi:number;
-  var transferMatrix :Transition[]= Object.entries(info['transferMatrix']).map(([key, value]) => {
-    const [before, after] = key.split("_").map((num) => parseInt(num, 10));
+  console.log(matrix)
+  console.log(uniqueKeys)
+  var transferMatrix :Transition[]= matrix 
+  ? Object.entries(matrix).map(([key, value]) => {
+      const [before, after] = key.split("_").map((num) => parseInt(num, 10));
       if (before === after) coi = before
-      return { before, after, value: Number(value)};
-  });
+      return { before, after, value: Number(value) };
+    })
+  : [];
 
   transferMatrix = transferMatrix.filter(d => d.before !== d.after)
-  var uniqueChar = new Set(info.uniqueKeys.filter(key => key !== coi));
+  var uniqueChar = new Set(uniqueKeys?.filter(key => key !== coi));
 
   const inflows = transferMatrix.filter(d => d.after === coi);
   const outflows = transferMatrix.filter(d => d.before === coi);
@@ -128,7 +128,7 @@ const Insight = ({ info }: Props) => {
     //   .selectAll(".tick text")
     //   .text(d => formatTick(d));
 
-  }, [info]);
+  }, [uniqueKeys, matrix]);
   return(
     <>
    <svg ref={svgRef}></svg>

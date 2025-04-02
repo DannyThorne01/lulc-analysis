@@ -68,14 +68,13 @@ const MapCanvas = () => {
 
         // const {urlFormat, bounds } = await lulcLayer(country);
         var urlFormat:string|undefined = ""
-        if(showInsights){
-            var response = await lulcLayerbyYear(country,year,data.reductions_to_key[selectedClass])
-            urlFormat = response.urlFormat
+        
+        if(showInsights && selectedClass){
+            const response1 = await lulcLayerbyYear(country,year,data.reductions_to_key[selectedClass])
+            urlFormat = response1.urlFormat
         }else{
-            var response = await lulcLayer(country,year)
-            console.log("ETOSNNGINTTT")
-            console.log(response)
-            urlFormat = response.urlFormat
+            const response2 = await lulcLayer(country,year)
+            urlFormat = response2.urlFormat
         }
         
         setTile(urlFormat);
@@ -218,11 +217,7 @@ const MapCanvas = () => {
         return (
           <div
             key={key}
-            onClick={() =>{console.log("key " +key); 
-              const index = data.values.indexOf(parseInt(key))+1; 
-              // console.log("index " + index)
-              setSelectedClass(index)} } // Handle click event
-            //setSelectedClass(data.values.indexOf(20))
+
             style={{
               display: "flex",
               alignItems: "center",

@@ -9,7 +9,7 @@ export type GlobalContext = {
   map: Map | undefined;
   setMap: SetState<Map>;
   tile: string | undefined;
-  setTile: SetState<string>;
+  setTile: SetState<string|undefined>;
   heatmapData: Props | undefined;
   setHeatMapData: SetState<Props>;
   linegraphData:LineGraphProps | undefined;
@@ -20,10 +20,10 @@ export type GlobalContext = {
   setCircleData: SetState<CircleData>;
   year: number
   setYear: SetState<number>;
-  selectedClass: number | undefined;
-  setSelectedClass: SetState<number>;
+  selectedClass: string | undefined;
+  setSelectedClass: SetState<string | undefined>;
   insightsData: Props | undefined; 
-  setInsightsData: SetState<Props>;
+  setInsightsData: SetState<Props| undefined>;
   showInsights: boolean;
   setShowInsights: SetState<boolean>;
 

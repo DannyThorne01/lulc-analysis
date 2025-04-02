@@ -50,9 +50,8 @@ export async function lulcLayer(input_country,year) {
 
 export async function lulcLayerbyYear(input_country, year,targetClass) {
   if(input_country!=""){
-    year = 2020;
-    console.log("wjvnrjnrjng3ng" + targetClass)
     targetClass = parseInt(targetClass,10);
+    console.log(targetClass)
   // Authenticate Earth Engine
   await authenticate();
   // Image collection
@@ -167,9 +166,9 @@ export async function bruv(input_country,targetClass,year,circleData){
       fs.writeFileSync(outputPath, JSON.stringify(transferMatrix, null, 2), 'utf8');
       const runtime = (Date.now() - startTime) / 1000; // Calculate runtime in seconds
       console.log(`Function executed in ${runtime.toFixed(2)} seconds`);
-      return {transferMatrix:transferMatrix, uniqueKeys:uniqueKeys}
+      return {matrix:transferMatrix, uniqueKeys:uniqueKeys}
   }
-  return {transferMatrix:{}, uniqueKeys:[]}
+  return {matrix:{}, uniqueKeys:[]}
 }
 export async function insights(input_country,targetClass,year,circleData) {
   if(input_country!=""){
@@ -254,7 +253,7 @@ export async function insights(input_country,targetClass,year,circleData) {
   console.log("trans")
   var uniqueKeys = await evaluate(uniqueY1Y2);
   console.log("uniqkjnf")
-  return {transferMatrix:transferMatrix, uniqueKeys:uniqueKeys}
+  return {matrix:transferMatrix, uniqueKeys:uniqueKeys}
   }else{
     return {}
   }

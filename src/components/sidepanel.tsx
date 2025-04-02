@@ -185,7 +185,7 @@ const SidePanel = () => {
           {loadingInsights ? (
             <p style={{ textAlign: "center", color: "#888" }}>Generating...</p>
           ) : insightsData ? (
-            <Insight info={insightsData} />
+            <Insight matrix = {insightsData.matrix} uniqueKeys = {insightsData.uniqueKeys} />
           ) : (
             <>
               <Dropdown

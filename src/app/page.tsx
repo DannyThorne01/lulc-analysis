@@ -23,7 +23,7 @@ const Page: React.FC = () => {
     radius: 50000, 
   });
   const [year, setYear] = useState<number>(2022);
-  const [selectedClass, setSelectedClass] = useState<number|undefined>(undefined);
+  const [selectedClass, setSelectedClass] = useState<string|undefined>(undefined);
   const [showInsights, setShowInsights] = useState<boolean>(false)
 
   const contextDict = {
