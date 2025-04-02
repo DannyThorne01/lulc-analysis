@@ -112,7 +112,7 @@ export async function lulcLayerbyYear(input_country, year,targetClass) {
 
 export async function bruv(input_country,targetClass,year,circleData){
   if(input_country!=""){
-    const startTime = Date.now();
+    // const startTime = Date.now();
     let currentYear = year;
     let prevYear = (year == 2000)? 2000: currentYear-1;
     targetClass = parseInt(targetClass,10);
@@ -160,12 +160,12 @@ export async function bruv(input_country,targetClass,year,circleData){
       var uniqueKeys = await evaluate(uniqueClasses);
     
       // Define the output path for the JSON file
-      const outputPath = path.resolve('/Users/danielthorne/ee-webmap/src/data', 'insightsfake.json');
+      // const outputPath = path.resolve('/Users/danielthorne/ee-webmap/src/data', 'insightsfake.json');
     
-      // Save the results to a JSON file
-      fs.writeFileSync(outputPath, JSON.stringify(transferMatrix, null, 2), 'utf8');
-      const runtime = (Date.now() - startTime) / 1000; // Calculate runtime in seconds
-      console.log(`Function executed in ${runtime.toFixed(2)} seconds`);
+      // // Save the results to a JSON file
+      // // fs.writeFileSync(outputPath, JSON.stringify(transferMatrix, null, 2), 'utf8');
+      // const runtime = (Date.now() - startTime) / 1000; // Calculate runtime in seconds
+      // console.log(`Function executed in ${runtime.toFixed(2)} seconds`);
       return {matrix:transferMatrix, uniqueKeys:uniqueKeys}
   }
   return {matrix:{}, uniqueKeys:[]}
@@ -347,11 +347,11 @@ export async function transferMatrixLulc(input_country) {
   var uniqueKeys = await evaluate(uniqueClasses);
 
   // Define the output path for the JSON file
-  const outputPath = path.resolve('/Users/danielthorne/ee-webmap/src/data', 'transferfake.json');
+  // const outputPath = path.resolve('/Users/danielthorne/ee-webmap/src/data', 'transferfake.json');
 
-  // Save the results to a JSON file
-  fs.writeFileSync(outputPath, JSON.stringify(transferMatrix, null, 2), 'utf8');
-  const runtime = (Date.now() - startTime) / 1000; // Calculate runtime in seconds
-  console.log(`Function executed in ${runtime.toFixed(2)} seconds`);
+  // // Save the results to a JSON file
+  // // fs.writeFileSync(outputPath, JSON.stringify(transferMatrix, null, 2), 'utf8');
+  // const runtime = (Date.now() - startTime) / 1000; // Calculate runtime in seconds
+  // console.log(`Function executed in ${runtime.toFixed(2)} seconds`);
   return {matrix:transferMatrix, uniqueKeys:uniqueKeys}
 }
