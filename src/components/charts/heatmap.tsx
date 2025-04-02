@@ -1,14 +1,9 @@
 import React, { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import data from "../../data/lc.json"
+import {Props} from "../../module/global"
 
 
-interface Props {
-  info: {
-    uniqueKeys: number[];
-    matrix: { [key: string]: number };
-  };
-}
 interface TransitionTotal {
   group: number;
   transitions: number;
@@ -19,8 +14,7 @@ interface Transition {
   value:number
 }
 
-
-const HeatMap = ({ info }: Props) => {
+const HeatMap = ({ uniqueKeys, matrix }: Props) => {
 
   const svgRef = useRef<SVGSVGElement | null>(null);
   const w = 500;
@@ -28,14 +22,17 @@ const HeatMap = ({ info }: Props) => {
   const m = { top: 40, right: 30, bottom: 100, left: 100 };
   const heatmapWidth = w - m.left - m.right;
   const heatmapHeight = h - m.top - m.bottom;
-  const uniqueKeys = info.uniqueKeys.map((key) => {return(data.key_map[key.toString()])})
+  const uniqueKeysString = uniqueKeys?.map((key) => {return(data.key_map[key.toString()])})
 
-  /* Creates a dict showing the before and after class and the amount of change between the two classes */ 
-  const transferMatrix :Transition[]= Object.entries(info['transferMatrix']).map(([key, value]) => {
-    const [before, after] = key.split("_").map((num) => parseInt(num, 10));
-    return { before, after, value: Number(value)  };
-  });
-
+  /* Creates a dict showing the before and after class and the amount of change between the two classes */
+  console.log(matrix)
+  console.log(uniqueKeys)
+  const transferMatrix :Transition[]= matrix 
+  ? Object.entries(matrix).map(([key, value]) => {
+      const [before, after] = key.split("_").map((num) => parseInt(num, 10));
+      return { before, after, value: Number(value) };
+    })
+  : [];
   /* Finds the total number of transitions for each before group in the transition Matrix */ 
   function groupTransitions(transitionMatrix: Transition[]): TransitionTotal[] {
     const groups = {};
@@ -54,7 +51,7 @@ const HeatMap = ({ info }: Props) => {
   function makeReductions(){
     var reductions: String[] =[]
     var discovered = new Set();
-    uniqueKeys.forEach((key) => {
+    uniqueKeysString?.forEach((key) => {
       if (!discovered.has(key)) {
         discovered.add(key);
         let red:String = data.reductions[key]
@@ -261,7 +258,7 @@ const HeatMap = ({ info }: Props) => {
       .on("mouseleave", function(event, d) {
         mouseleave.call(this, d); 
       });
-  }, [info]);
+  }, [uniqueKeys, matrix]);
  
 
   return <svg ref={svgRef}></svg>;

@@ -114,69 +114,62 @@ export async function lulcLayerbyYear(input_country, year,targetClass) {
 export async function bruv(input_country,targetClass,year,circleData){
   if(input_country!=""){
     const startTime = Date.now();
-    console.log("LOADING INSIGHTS...");
-    console.log("Country:",input_country ?? "NULL or UNDEFINED");
-    console.log("Selected Class:", targetClass ?? "NULL or UNDEFINED");
-    console.log("Year:", year ?? "NULL or UNDEFINED");
-    console.log("Circle Data:", circleData ?? "NULL or UNDEFINED");
-  let currentYear = year;
-  let prevYear = (year == 2000)? 2000: currentYear-1;
+    let currentYear = year;
+    let prevYear = (year == 2000)? 2000: currentYear-1;
+    targetClass = parseInt(targetClass,10);
+    await authenticate();
+    const circleRegion = ee.Geometry.Point([circleData.center.lng, circleData.center.lat])
+    .buffer(circleData.radius);
+    const col = ee.ImageCollection("projects/sat-io/open-datasets/GLC-FCS30D/annual");
+    let image_at_year1 = col.mosaic().select(`b${currentYear - 1999}`).rename('y1');
+    let image_at_year2 = col.mosaic().select(`b${prevYear - 1999}`).rename('y2');
 
-  targetClass = parseInt(targetClass,10);
-  await authenticate();
-  const circleRegion = ee.Geometry.Point([circleData.center.lng, circleData.center.lat])
-  .buffer(circleData.radius);
-  const col = ee.ImageCollection("projects/sat-io/open-datasets/GLC-FCS30D/annual");
-  let image_at_year1 = col.mosaic().select(`b${currentYear - 1999}`).rename('y1');
-  let image_at_year2 = col.mosaic().select(`b${prevYear - 1999}`).rename('y2');
-
-  const area = ee.Image.pixelArea().divide(1e4);
-  const transitions = image_at_year1.addBands(image_at_year2).addBands(area);
-  const stratifiedSamples = transitions.stratifiedSample({
-    numPoints: 200, 
-    classBand: 'y1',
-    region: circleRegion, 
-    scale: 30,
-    geometries: true,
-    classValues: [0, 10, 11, 51, 52, 61, 62, 71, 72, 81, 82, 91, 120, 130, 150, 181, 182, 183, 185, 186, 187, 190, 200, 210],
-    classPoints: Array(24).fill(200),
-  });
-
-    var y1Values = stratifiedSamples.aggregate_array('y1');
-    var uniqueY1Values = y1Values.distinct();
-    const targetValue = uniqueY1Values.get(targetClass);
-    console.log("AYYEYEYYEYEE" + await evaluate(targetValue))
-    const filteredSamples = stratifiedSamples.filter(
-      ee.Filter.or(
-        ee.Filter.eq("y1", uniqueY1Values.get(targetClass)),
-        ee.Filter.eq("y2", uniqueY1Values.get(targetClass))
-      )
-    )
-    const samplesWithTransition = filteredSamples.map(function(feature) {
-      const y1 = ee.Number(feature.get('y1'));
-      const y2 = ee.Number(feature.get('y2'));
-      const transitionKey = y1.format('%d').cat('_').cat(y2.format('%d'));
-      return feature.set('transition', transitionKey);
+    const area = ee.Image.pixelArea().divide(1e4);
+    const transitions = image_at_year1.addBands(image_at_year2).addBands(area);
+    const stratifiedSamples = transitions.stratifiedSample({
+      numPoints: 200, 
+      classBand: 'y1',
+      region: circleRegion, 
+      scale: 30,
+      geometries: true,
+      classValues: [0, 10, 11, 51, 52, 61, 62, 71, 72, 81, 82, 91, 120, 130, 150, 181, 182, 183, 185, 186, 187, 190, 200, 210],
+      classPoints: Array(24).fill(200),
     });
-    const transitionCounts = samplesWithTransition.aggregate_histogram('transition');
-    var uniqueClasses = ee.List([
-      stratifiedSamples.aggregate_array('y1'), 
-      stratifiedSamples.aggregate_array('y2')  
-    ]).flatten().distinct();
-    var transferMatrix = await evaluate(transitionCounts);
-    var uniqueKeys = await evaluate(uniqueClasses);
-  
-    // Define the output path for the JSON file
-    const outputPath = path.resolve('/Users/danielthorne/ee-webmap/src/data', 'insightsfake.json');
-  
-    // Save the results to a JSON file
-    fs.writeFileSync(outputPath, JSON.stringify(transferMatrix, null, 2), 'utf8');
-    const runtime = (Date.now() - startTime) / 1000; // Calculate runtime in seconds
-    console.log(`Function executed in ${runtime.toFixed(2)} seconds`);
-    return {transferMatrix:transferMatrix, uniqueKeys:uniqueKeys}
 
+      var y1Values = stratifiedSamples.aggregate_array('y1');
+      var uniqueY1Values = y1Values.distinct();
+      const targetValue = uniqueY1Values.get(targetClass);
+
+      const filteredSamples = stratifiedSamples.filter(
+        ee.Filter.or(
+          ee.Filter.eq("y1", uniqueY1Values.get(targetClass)),
+          ee.Filter.eq("y2", uniqueY1Values.get(targetClass))
+        )
+      )
+      const samplesWithTransition = filteredSamples.map(function(feature) {
+        const y1 = ee.Number(feature.get('y1'));
+        const y2 = ee.Number(feature.get('y2'));
+        const transitionKey = y1.format('%d').cat('_').cat(y2.format('%d'));
+        return feature.set('transition', transitionKey);
+      });
+      const transitionCounts = samplesWithTransition.aggregate_histogram('transition');
+      var uniqueClasses = ee.List([
+        stratifiedSamples.aggregate_array('y1'), 
+        stratifiedSamples.aggregate_array('y2')  
+      ]).flatten().distinct();
+      var transferMatrix = await evaluate(transitionCounts);
+      var uniqueKeys = await evaluate(uniqueClasses);
+    
+      // Define the output path for the JSON file
+      const outputPath = path.resolve('/Users/danielthorne/ee-webmap/src/data', 'insightsfake.json');
+    
+      // Save the results to a JSON file
+      fs.writeFileSync(outputPath, JSON.stringify(transferMatrix, null, 2), 'utf8');
+      const runtime = (Date.now() - startTime) / 1000; // Calculate runtime in seconds
+      console.log(`Function executed in ${runtime.toFixed(2)} seconds`);
+      return {transferMatrix:transferMatrix, uniqueKeys:uniqueKeys}
   }
-  
+  return {transferMatrix:{}, uniqueKeys:[]}
 }
 export async function insights(input_country,targetClass,year,circleData) {
   if(input_country!=""){
@@ -361,5 +354,5 @@ export async function transferMatrixLulc(input_country) {
   fs.writeFileSync(outputPath, JSON.stringify(transferMatrix, null, 2), 'utf8');
   const runtime = (Date.now() - startTime) / 1000; // Calculate runtime in seconds
   console.log(`Function executed in ${runtime.toFixed(2)} seconds`);
-  return {transferMatrix:transferMatrix, uniqueKeys:uniqueKeys}
+  return {matrix:transferMatrix, uniqueKeys:uniqueKeys}
 }

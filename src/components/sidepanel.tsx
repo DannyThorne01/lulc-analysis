@@ -2,7 +2,7 @@ import React from 'react';
 import HeatMap from './charts/heatmap'; // Assuming HeatMap is in the same directory
 import StackLineGraph from './charts/line-graph'; // Assuming StackLineGraph is in the same 
 import Insight from './charts/insight';
-import { Context } from '../module/global';
+import { Context,Props, LineGraphProps} from '../module/global';
 import { useContext, useEffect, useState } from "react";
 import { analysisLulc, lulcLayer, transferMatrixLulc,bruv} from "../module/ee";
 import Dropdown from './molecules/dropdown';
@@ -19,21 +19,27 @@ const SidePanel = () => {
       throw new Error('Context must be used within a ContextProvider');
     }
     const { heatmapData,setHeatMapData,
-            linegraphData,setLineGraphData,insightsData, setInsightsData,
-            country, circleData,setCircleData,year, setYear,selectedClass,setSelectedClass,showInsights,setShowInsights} = context;
+            linegraphData,setLineGraphData,
+            insightsData, setInsightsData,
+            country, setCountry,
+            circleData,setCircleData,
+            year, setYear,
+            selectedClass,setSelectedClass,
+            showInsights,setShowInsights} = context;
+
     useEffect(() => {
       if (!country) return;
       async function loadHeatMap() {
-        setLoading(true); // Start loading
+        setLoading(true); 
         try {
-          
-          const heatmap = await transferMatrixLulc(country); // Slow function
-          console.log(heatmap)
+          const heatmap = await transferMatrixLulc(country);
           const linegraph = await analysisLulc(country);
- 
-          setLineGraphData(linegraph.evaluatedAreas)
+         
+          console.log(linegraph.evaluatedAreas)
+         
           setHeatMapData(heatmap); 
    
+          // Find  the values in the linegraph
           if (linegraph.evaluatedAreas.length > 0) {
             const mappings: Record<number, number> = linegraph.evaluatedAreas[0].groups.reduce((acc, e, index) => {
               acc[index] = e.lc; // Use index as key, e.lc as value
@@ -41,13 +47,19 @@ const SidePanel = () => {
             }, {});
             const temp = Object.values(mappings);
             const updatedValues = temp.map((value) => data.reductions[data.key_map[value.toString()]]);
+
+            const lineGraphData: LineGraphProps = {
+              info: linegraph.evaluatedAreas,
+              vals: updatedValues
+            };
             
+            setLineGraphData(lineGraphData);
             setValues(updatedValues);
           }
         } catch (error) {
           console.error("Error fetching heatmap data:", error);
         } finally {
-          setLoading(false); // Stop loading
+          setLoading(false);
         }
       }
       loadHeatMap();
@@ -56,17 +68,12 @@ const SidePanel = () => {
     useEffect(() => {
       if (!showInsights) return;
       async function loadInsights() {
-
         setLoadingInsights(true)
         try {
-          console.log("LOADING INSIGHTS...");
-          console.log("Country:", country ?? "NULL or UNDEFINED");
-          console.log("Selected Class:", selectedClass ?? "NULL or UNDEFINED");
-          console.log("Year:", year ?? "NULL or UNDEFINED");
-          console.log("Circle Data:", circleData ?? "NULL or UNDEFINED");
-          const insight = await bruv(country,data.values.indexOf(data.reductions_to_key[selectedClass]),year,circleData)
-          console.log("Repeat")
-          setInsightsData(insight)
+          if (selectedClass){
+            const insight = await bruv(country,data.values.indexOf(data.reductions_to_key[selectedClass]),year,circleData)
+            setInsightsData(insight) 
+          }
         }
         catch(error){
           console.error("Error fetching Bargraph data:", error);
@@ -117,7 +124,8 @@ const SidePanel = () => {
           ) : !heatmapData ? (
             <p style={{ textAlign: 'center', color: '#888' }}>NO DATA</p>
           ) : (
-            <HeatMap info={heatmapData} />
+            <HeatMap matrix = {heatmapData.matrix} uniqueKeys = {heatmapData.uniqueKeys} 
+                       />
           )}
         </div>
   
@@ -136,7 +144,7 @@ const SidePanel = () => {
           ) : !linegraphData ? (
             <p style={{ textAlign: 'center', color: '#888' }}>NO DATA</p>
           ) : (
-            <StackLineGraph info={linegraphData} vals={values} />
+            <StackLineGraph info={linegraphData.info} vals={linegraphData.vals} />
           )}
         </div>
         <div

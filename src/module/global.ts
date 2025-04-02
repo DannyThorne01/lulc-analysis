@@ -1,6 +1,5 @@
 
-import { Dispatch, ReactNode, SetStateAction, createContext, useState } from 'react';
-import { GeoJSON } from 'geojson';
+import { createContext} from 'react';
 import { Map } from 'maplibre-gl';
 import * as d3 from "d3";
 
@@ -25,8 +24,6 @@ export type GlobalContext = {
   setSelectedClass: SetState<number>;
   insightsData: Props | undefined; 
   setInsightsData: SetState<Props>;
-  seeInsight: boolean
-  setSeeInsight: SetState<boolean>;
   showInsights: boolean;
   setShowInsights: SetState<boolean>;
 
@@ -53,18 +50,16 @@ interface Group {
 }
 
 interface Info {
-  groups: Group[]; // Array of Group objects
+  groups: Group[]; 
 }
-
 export interface LineGraphProps {
-  info: Info[]; // Array of Info objects
+  info: Info[];
+  vals: string[]
 }
 
 export interface Props {
-  info?: {
     uniqueKeys?: number[];
     matrix?: { [key: string]: number };
-  };
 }
 
 export const Context = createContext<GlobalContext | undefined>(undefined);

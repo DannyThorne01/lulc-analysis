@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 interface DropdownProps {
   options: string[];
   value?: string | null;
-  onChange: (value: string | null) => void;
+  onChange: (value: string) => void;
   label?: string;
   isEditable?: boolean;
   style?: React.CSSProperties; // External styling for wrapper div

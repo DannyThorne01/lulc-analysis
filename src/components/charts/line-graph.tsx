@@ -2,29 +2,16 @@ import React, { JSX, useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import data from "../../data/lc.json";
 import Dropdown from "../../components/molecules/dropdown"
+import {LineGraphProps} from "../../module/global"
 
-
-interface Group {
-  area: number; // The area value
-  lc: number;   // The land cover type identifier
-}
-
-interface Info {
-  groups: Group[]; // Array of Group objects
-}
-
-interface Props {
-  info: Info[]; // Array of Info objects
-  vals: string[]
-}
-
-const StackLineGraph = ({ info,vals }: Props) => {
+const StackLineGraph = ({ info,vals }: LineGraphProps) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const w = 600;
   const h = 600;
   const m = { top: 40, right: 30, bottom: 100, left: 100 };
   const slinegraphWidth = w - m.left - m.right;
   const slinegraphHeight = h - m.top - m.bottom;
+  console.log(info)
   console.log(vals)
   
 
