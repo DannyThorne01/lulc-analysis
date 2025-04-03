@@ -22,24 +22,19 @@ export async function lulcLayer(input_country: string, year: number) {
     const region = countries.filter(ee.Filter.eq('ADM0_NAME', input_country));
     const geometry = region.geometry();
 
-    // Select and process year band
-    const band = `b${year - 1999}`;
-    const image = collection
-      .select(band)
-      .mosaic()
-      .rename('lulc')
-      .set({ ...lc }); // Spread LC metadata directly
+    const col: ee.ImageCollection = ee.ImageCollection("projects/sat-io/open-datasets/GLC-FCS30D/annual");
+    let colBand: ee.ImageCollection = col.select(`b${year-1999}`);
+    const image: ee.Image = colBand.mosaic().rename('lulc').set({
+      lulc_class_names: lc.names,
+      lulc_class_palette: lc.palette,
+      lulc_class_values: lc.values,
+    });
 
-    // Clip and visualize
-    const visualized = image
-      .clip(geometry)
-      .visualize({
-        min: 0,
-        max: Math.max(...lc.values),
-        palette: lc.palette
-      });
+    // Clip the image to Guyana's boundaries
+    const clippedImage: ee.Image = image.clip(geometry);
+    // Visualized the image
+    const visualized: ee.Image = clippedImage.visualize();
 
-    // Get tiles URL
     const { urlFormat } = await getMapId(visualized, {});
     return { urlFormat };
 
