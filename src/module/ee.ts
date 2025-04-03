@@ -6,109 +6,49 @@ import lc from '../data/lc.json';
 import * as fs from 'fs'; // Import the filesystem module
 import * as path from 'path'; 
 
-export async function lulcLayer(input_country,year) {
-  if(input_country!=""){
-   
-  // Authenticate Earth Engine
-  await authenticate();
+// Configure temp directory for Earth Engine dependencies
+process.env.XMLHTTPREQUEST_TEMP_DIR = '/tmp';
 
-  console.log("INPIUTTTT COUNRYTRY " + input_country)
-  // Image collection
-  const col: ee.ImageCollection = ee.ImageCollection("projects/sat-io/open-datasets/GLC-FCS30D/annual");
+export async function lulcLayer(input_country: string, year: number) {
+  if (!input_country) return {};
 
-  const countries = ee.FeatureCollection('FAO/GAUL/2015/level0');
-  const guyana = countries.filter(ee.Filter.eq('ADM0_NAME', input_country));
-  const geometry = guyana.geometry();
+  try {
+    await authenticate();
 
-  let colBand: ee.ImageCollection = col.select(`b${year-1999}`);
-  const image: ee.Image = colBand.mosaic().rename('lulc').set({
-    lulc_class_names: lc.names,
-    lulc_class_palette: lc.palette,
-    lulc_class_values: lc.values,
-  });
+    const collection = ee.ImageCollection("projects/sat-io/open-datasets/GLC-FCS30D/annual");
+    const countries = ee.FeatureCollection('FAO/GAUL/2015/level0');
+    
+    // Get target region
+    const region = countries.filter(ee.Filter.eq('ADM0_NAME', input_country));
+    const geometry = region.geometry();
 
-  // Clip the image to Guyana's boundaries
-  const clippedImage: ee.Image = image.clip(geometry);
-  // Visualized the image
-  const visualized: ee.Image = clippedImage.visualize();
-  // Get image url
-  const { urlFormat } = await getMapId(visualized, {});
+    // Select and process year band
+    const band = `b${year - 1999}`;
+    const image = collection
+      .select(band)
+      .mosaic()
+      .rename('lulc')
+      .set({ ...lc }); // Spread LC metadata directly
 
-  const bounds = geometry.bounds().coordinates().getInfo();
-  const [west, south, east, north] = [
-    bounds[0][0][0], // west
-    bounds[0][0][1], // south
-    bounds[0][2][0], // east
-    bounds[0][2][1], // north
-  ];
+    // Clip and visualize
+    const visualized = image
+      .clip(geometry)
+      .visualize({
+        min: 0,
+        max: Math.max(...lc.values),
+        palette: lc.palette
+      });
 
-  return { urlFormat,bounds };
-  }else{
-    return {}
+    // Get tiles URL
+    const { urlFormat } = await getMapId(visualized, {});
+    return { urlFormat };
+
+  } catch (error) {
+    console.error('LULC Layer Error:', error);
+    return { error: 'Failed to generate layer' };
   }
 }
 
-export async function lulcLayerbyYear(input_country, year,targetClass) {
-  if(input_country!=""){
-    targetClass = parseInt(targetClass,10);
-    console.log(targetClass)
-  // Authenticate Earth Engine
-  await authenticate();
-  // Image collection
-  const col: ee.ImageCollection = ee.ImageCollection("projects/sat-io/open-datasets/GLC-FCS30D/annual");
-
-  const countries = ee.FeatureCollection('FAO/GAUL/2015/level0');
-  const guyana = countries.filter(ee.Filter.eq('ADM0_NAME', input_country));
-  const geometry = guyana.geometry();
-  let colBand: ee.ImageCollection = col.select(`b${year-1999}`);
-  const image: ee.Image = colBand.mosaic().rename('lulc').set({
-    lulc_class_names: lc.names,
-    lulc_class_palette: lc.palette,
-    lulc_class_values: lc.values,
-  });
-
-  var recodeClasses = function(image) {
-    // Define the class values
-    var classes = lc.values;
-    var reclassed = image.remap(classes, ee.List.sequence(1, classes.length));
-    return reclassed;
-  };
-
-  // Create image mosaic
-  let image_at_year: ee.ImageCollection = col.mosaic().select(`b${year-1999}`).set({
-    lulc_class_names: lc.names,
-    lulc_class_palette: lc.palette,
-    lulc_class_values: lc.values,
-  });;
-  var recoded_image_at_year = recodeClasses(image_at_year);
-  recoded_image_at_year = recoded_image_at_year.rename('lulc')
-  var maskTargetClass = recoded_image_at_year.eq(targetClass);
-  var final_image = recoded_image_at_year.updateMask(maskTargetClass)
-  // // Clip the image to Guyana's boundaries
-  // const clippedImage: ee.Image = image.clip(geometry);
-  // console.log("TARGETCLASS" + targetClass)
-  // var maskTargetClass = clippedImage.eq(1)
-  // var finalImage = clippedImage.updateMask(maskTargetClass)
-  // Visualized the image
-  const clippedImage: ee.Image = final_image.clip(geometry);
-  // Visualized the image
-  var visParams = {
-    min: 1,  // Since you remapped to start from 1
-    max: 34, // Number of LULC classes after remapping
-    palette: lc.palette  // Ensure the palette is correctly referenced
-  };
-  // const visualized: ee.Image = clippedImage.visualize();
-  const visualized: ee.Image = clippedImage.visualize(visParams);
-  // Get image url
-  const { urlFormat } = await getMapId(visualized, {});
-
-  // const bounds = geometry.bounds().coordinates().getInfo();
- 
-  return { urlFormat};
-  }else{
-    return {}
-  }
-}
 
 export async function bruv(input_country,targetClass,year,circleData){
   if(input_country!=""){

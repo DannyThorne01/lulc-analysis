@@ -2,7 +2,7 @@
 import { Map, RasterTileSource } from "maplibre-gl";
 import { useCallback, useContext, useEffect, useState } from "react";
 import "../../node_modules/maplibre-gl/dist/maplibre-gl.css";
-import { lulcLayer, lulcLayerbyYear } from "../module/ee";
+import { lulcLayer } from "../module/ee";
 import MapComponent, { NavigationControl } from "react-map-gl/maplibre"; 
 import { Context , CircleData} from '../module/global';
 import data from '../data/lc.json';
@@ -69,13 +69,13 @@ const MapCanvas = () => {
         // const {urlFormat, bounds } = await lulcLayer(country);
         var urlFormat:string|undefined = ""
         
-        if(showInsights && selectedClass){
-            const response1 = await lulcLayerbyYear(country,year,data.reductions_to_key[selectedClass])
-            urlFormat = response1.urlFormat
-        }else{
+        // if(showInsights && selectedClass){
+        //     const response1 = await lulcLayerbyYear(country,year,data.reductions_to_key[selectedClass])
+        //     urlFormat = response1.urlFormat
+        // }else{
             const response2 = await lulcLayer(country,year)
             urlFormat = response2.urlFormat
-        }
+        
         
         setTile(urlFormat);
       } catch (error) {

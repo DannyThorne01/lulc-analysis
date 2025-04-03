@@ -15,7 +15,6 @@ process.env.EE_LOGGING = 'true';
  */
 export function authenticate(): Promise<void> {
   const serviceAccountKey = process.env.EE_API_KEY;
-
   if (!serviceAccountKey) {
     throw new Error("Environment variable 'service_account_key' is not set.");
   }
