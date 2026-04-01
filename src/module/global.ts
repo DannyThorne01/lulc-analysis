@@ -12,22 +12,16 @@ export type GlobalContext = {
   setTile: SetState<string|undefined>;
   heatmapData: Props | undefined;
   setHeatMapData: SetState<Props>;
-  linegraphData:LineGraphProps | undefined;
+  linegraphData: LineGraphProps | undefined;
   setLineGraphData: SetState<LineGraphProps>;
-  country: string
-  setCountry: SetState<string>
+  country: string;
+  setCountry: SetState<string>;
   circleData: CircleData;
   setCircleData: SetState<CircleData>;
-  year: number
+  year: number;
   setYear: SetState<number>;
   selectedClass: string | undefined;
   setSelectedClass: SetState<string | undefined>;
-  insightsData: Props | undefined; 
-  setInsightsData: SetState<Props| undefined>;
-  showInsights: boolean;
-  setShowInsights: SetState<boolean>;
-
-  //
 };
 
 export interface SliderProps {

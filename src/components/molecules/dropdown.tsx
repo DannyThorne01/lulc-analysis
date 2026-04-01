@@ -56,7 +56,7 @@ const Dropdown: React.FC<DropdownProps> = ({ options, value ="", onChange, label
           padding: '5px',
           fontSize: '15px',
           border: '2px solid #f9f9f9',
-          borderRadius: '50px',
+          borderRadius: '10px',
           color: '#333',
           cursor: isEditable ? 'text' : 'pointer',
           outline: 'none',

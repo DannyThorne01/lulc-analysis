@@ -1,17 +1,16 @@
 
 import { Map, RasterTileSource } from "maplibre-gl";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect } from "react";
 import "../../node_modules/maplibre-gl/dist/maplibre-gl.css";
-import { lulcLayer } from "../module/ee";
+import { fetchLulcTile } from "../module/ee";
 import MapComponent, { NavigationControl } from "react-map-gl/maplibre"; 
-import { Context , CircleData} from '../module/global';
+import { Context } from '../module/global';
 import data from '../data/lc.json';
 import Slider from "../components/molecules/slider"
-import CircleComponent from "../components/molecules/circle"; 
 
 const MapCanvas = () => {
   // Declare state variables
-  const MAP_STYLE = "https://demotiles.maplibre.org/style.json"
+  const MAP_STYLE = "https://tiles.stadiamaps.com/styles/alidade_smooth.json"
 
   const INITIAL_VIEW_STATE = {
     latitude: 0,
@@ -26,15 +25,11 @@ const MapCanvas = () => {
     throw new Error('Context must be used within a ContextProvider');
   }
 
-  const { map, setMap, tile, setTile, country,circleData,setCircleData,year, setYear, selectedClass, setSelectedClass,showInsights,setShowInsights} = context;
+  const { map, setMap, tile, setTile, country, year, setYear, selectedClass } = context;
 
   const sliderValueChanged = useCallback((val: number) => {
     setYear(val);
     }, [setYear]);
-
-  const circleValueChanged = useCallback((val: CircleData) => {
-      setCircleData(val);
-      }, [setCircleData]);
 
   // Layer ID for the GEE overlay
   const eeLayerId = "gee-layer";
@@ -67,14 +62,9 @@ const MapCanvas = () => {
         }
 
         // const {urlFormat, bounds } = await lulcLayer(country);
-        var urlFormat:string|undefined = ""
-        
-        // if(showInsights && selectedClass){
-        //     const response1 = await lulcLayerbyYear(country,year,data.reductions_to_key[selectedClass])
-        //     urlFormat = response1.urlFormat
-        // }else{
-            const response2 = await lulcLayer(country,year)
-            urlFormat = response2.urlFormat
+        var urlFormat: string | undefined = ''
+        const response2 = await fetchLulcTile(country, year)
+        urlFormat = response2.urlFormat
         
         
         setTile(urlFormat);
@@ -85,7 +75,7 @@ const MapCanvas = () => {
     if (country) {
       loadLULCTiles();
     }
-  }, [country,selectedClass,year,showInsights]);
+  }, [country, year]);
 
   
   // Add LULC tiles to the map when available
@@ -144,15 +134,6 @@ const MapCanvas = () => {
 >
   <NavigationControl position="top-left" />
 
-  {showInsights && map && (
-    <CircleComponent 
-      map={map} 
-      circleData={circleData} 
-      onChangeCircleData={(newData) => {
-        circleValueChanged(newData);
-      }} 
-    />
-  )}
 </MapComponent>
       <div
       style={{

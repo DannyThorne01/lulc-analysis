@@ -8,7 +8,7 @@ const StackLineGraph = ({ info,vals }: LineGraphProps) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const w = 600;
   const h = 600;
-  const m = { top: 40, right: 30, bottom: 100, left: 100 };
+  const m = { top: 20, right: 15, bottom: 70, left: 70 };
   const slinegraphWidth = w - m.left - m.right;
   const slinegraphHeight = h - m.top - m.bottom;
   console.log(info)
