@@ -10,7 +10,7 @@ import Slider from "../components/molecules/slider"
 
 const MapCanvas = () => {
   // Declare state variables
-  const MAP_STYLE = "https://tiles.stadiamaps.com/styles/alidade_smooth.json"
+  const MAP_STYLE = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
 
   const INITIAL_VIEW_STATE = {
     latitude: 0,
